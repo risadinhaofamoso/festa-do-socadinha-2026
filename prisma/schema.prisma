@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite nao suporta enums nativos no Prisma; os valores validos sao
+// validados via Zod (lib/validations.ts) e tipados em lib/types.ts:
+// PaymentStatus: "PAGO" | "PENDENTE" | "PARCIAL"
+// GiftType: "SOMENTE_CONVITE" | "CONVITE_CAMISA_CANECA"
+
+model Table {
+  id        Int      @id @default(autoincrement())
+  number    Int      @unique
+  capacity  Int
+  // label = nome do grupo/familia dono da mesa (ex: "GRUPO VILLELA").
+  // A cor da mesa no mapa e derivada deste nome (ver lib/grupos.ts).
+  label     String?
+  // Posicao no mapa do salao, no sistema de coordenadas de lib/layout-salao.ts.
+  // Nulo = mesa sem posicao definida (cai na area "sem posicao" do mapa).
+  positionX Int?
+  positionY Int?
+  // "H" = mesa deitada (lugares em cima e embaixo)
+  // "V" = mesa em pe (lugares nas laterais esquerda e direita)
+  orientation String @default("H")
+  seats     Seat[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tables")
+}
+
+model Seat {
+  id         Int     @id @default(autoincrement())
+  tableId    Int
+  table      Table   @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  seatNumber Int
+  invite     Invite?
+
+  @@unique([tableId, seatNumber])
+  @@map("seats")
+}
+
+model Guest {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  notes     String?
+  invites   Invite[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("guests")
+}
+
+model Invite {
+  id            Int           @id @default(autoincrement())
+  number        Int           @unique
+  guestId       Int
+  guest         Guest         @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  attendeeName  String
+  price         Float
+  paymentStatus String    @default("PENDENTE")
+  paymentMethod String?
+  giftType      String    @default("SOMENTE_CONVITE")
+  seatId        Int?      @unique
+  seat          Seat?     @relation(fields: [seatId], references: [id], onDelete: SetNull)
+  checkedIn     Boolean   @default(false)
+  checkedInAt   DateTime?
+  draw          Draw?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("invites")
+}
+
+// Sorteio de brindes durante a festa.
+// inviteId e unico: cada convite so pode ser sorteado uma vez.
+model Draw {
+  id          Int       @id @default(autoincrement())
+  inviteId    Int       @unique
+  invite      Invite    @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  prize       String
+  delivered   Boolean   @default(false)
+  deliveredAt DateTime?
+  drawnAt     DateTime  @default(now())
+
+  @@map("draws")
+}

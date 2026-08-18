@@ -1,0 +1,37 @@
+import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
+import "./globals.css";
+import { Sidebar } from "@/components/sidebar";
+import { Toaster } from "sonner";
+
+const fontSans = Inter({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const fontMono = JetBrains_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Festa do Socadinha 2026 — Painel de Controle",
+  description: "Controle de reservas, convites e financeiro da festa",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html
+      lang="pt-BR"
+      className={`dark ${fontSans.variable} ${fontMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex bg-background text-foreground">
+        <Sidebar />
+        <div className="flex-1 min-w-0 flex flex-col">
+          <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8">{children}</main>
+        </div>
+        <Toaster richColors position="top-right" />
+      </body>
+    </html>
+  );
+}
