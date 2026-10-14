@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Armchair,
@@ -12,10 +12,12 @@ import {
   PartyPopper,
   Gift,
   Menu,
+  LogOut,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Rosquinha } from "@/components/tema/ilustracoes";
+import { sair } from "@/lib/actions/auth";
 
 const ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -27,9 +29,19 @@ const ITEMS = [
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ protegido }: { protegido: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [aberto, setAberto] = useState(false);
+
+  // A tela de login não tem menu.
+  if (pathname.startsWith("/login")) return null;
+
+  async function handleSair() {
+    await sair();
+    router.replace("/login");
+    router.refresh();
+  }
 
   return (
     <>
@@ -89,9 +101,20 @@ export function Sidebar() {
             );
           })}
         </nav>
+        {protegido && (
+          <div className="px-3 pb-2">
+            <button
+              onClick={handleSair}
+              className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              Sair
+            </button>
+          </div>
+        )}
         <div className="px-5 py-4 text-xs text-muted-foreground border-t flex items-center gap-2">
           <PartyPopper className="h-3.5 w-3.5 animate-wiggle" />
-          Uso local · SQLite
+          {protegido ? "Acesso protegido por senha" : "Uso local · SQLite"}
         </div>
       </aside>
     </>

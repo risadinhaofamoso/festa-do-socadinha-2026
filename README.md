@@ -5,6 +5,8 @@ sorteio de brindes da festa. Tema visual: Simpsons.
 
 > 📌 O arquivo [PROJECT_BRAIN.md](PROJECT_BRAIN.md) é o **cérebro do projeto** — regras,
 > decisões e histórico. Leia antes de alterar qualquer coisa.
+>
+> 🌐 Para colocar o site na internet e acessar de qualquer lugar, veja [DEPLOY.md](DEPLOY.md).
 
 ---
 
@@ -189,8 +191,20 @@ npx prisma migrate reset --skip-seed
 
 ## Backup
 
-Os dados ficam num único arquivo: `prisma/dev.db`. Para fazer backup, copie esse arquivo.
-**Recomendado copiar na véspera da festa.**
+Rodando no notebook, os dados ficam num único arquivo: `prisma/dev.db`. Para fazer backup,
+copie esse arquivo. **Recomendado copiar na véspera da festa.**
+
+Se estiver usando a versão hospedada, os dados ficam no Turso e o backup é feito por lá.
+
+## Senha de acesso
+
+Rodando local, o site **não pede senha** — seria só atrapalhar na portaria.
+
+Publicado na internet, ele **exige senha** (configurada na variável `SENHA_ACESSO`), porque o
+painel expõe nome, telefone e situação de pagamento dos convidados. Detalhes em
+[DEPLOY.md](DEPLOY.md).
+
+Para testar o login no notebook, preencha `SENHA_ACESSO` no `.env` e reinicie o servidor.
 
 ---
 

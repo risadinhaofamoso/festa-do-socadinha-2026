@@ -113,6 +113,7 @@ Draw (sorteio)    → id, inviteId (ÚNICO), prize, delivered, deliveredAt?, dra
 | `/sorteio` | Roleta de brindes durante a festa: só quem fez check-in concorre, registro de prêmio e entrega |
 | `/financeiro` | Totais por status/forma/brinde, lista de pendentes, exportar CSV |
 | `/configuracoes` | Aplica a planta real do salão; adicionar/editar/remover mesas depois |
+| `/login` | Só existe quando `SENHA_ACESSO` está definida. Sem sidebar, redireciona de volta para onde a pessoa tentou ir |
 
 **Cores dos lugares no mapa:**
 
@@ -203,8 +204,27 @@ Mesma lógica da D-01: versões estáveis e bem conhecidas reduzem risco.
 
 **D-04 — Enums em `String` por causa do SQLite.** Ver seção 4.
 
-**D-05 — Sem autenticação, de propósito.** É uso pessoal e local; login só atrapalharia
-na portaria.
+**D-05 — Autenticação: senha única, e só quando publicado.** ⚠️ *Revisada em 18/08/2026.*
+A decisão original era **não ter login**, porque o uso seria local. Quando o usuário decidiu
+hospedar o site para acessar de qualquer lugar, isso virou um problema: o painel mostra nome,
+telefone e situação de pagamento de ~250 pessoas. A solução:
+
+- Uma **senha só**, compartilhada — não existe cadastro de usuários.
+- O comportamento depende do ambiente: **sem `SENHA_ACESSO` definida, o site fica destrancado**
+  (uso local no notebook, onde login atrapalharia na portaria); **com a variável definida,
+  exige login** (produção).
+- O cookie guarda um HMAC gerado com `SESSION_SECRET`; a senha nunca vai para o navegador.
+- Implementação em `lib/auth.ts` + `middleware.ts` + `app/login/`.
+- ⚠️ **Nunca publicar sem `SENHA_ACESSO`.**
+
+**D-12 — Mesmo schema roda em arquivo local e no Turso.**
+Usa o driver adapter libSQL do Prisma (`previewFeatures = ["driverAdapters"]`), então o
+`provider` continua `sqlite` e as migrações servem aos dois. `lib/prisma.ts` escolhe pela
+presença de `TURSO_DATABASE_URL`. Isso preserva o uso **offline** no notebook, que importa se
+o Wi-Fi do salão falhar no dia da festa.
+
+⚠️ **Os dois bancos são independentes** — dado cadastrado num não aparece no outro. O usuário
+precisa escolher um para valer.
 
 **D-06 — Todas as páginas de dados são `force-dynamic`.**
 São painéis que leem o banco a cada acesso. Sem isso, um `npm run build && npm start`
@@ -288,6 +308,12 @@ começar a cadastrar os convites reais da festa.
 então a aparência final foi verificada por inspeção de CSS/DOM e por uma prévia SVG gerada a
 partir do layout, não a olho nu. Vale abrir e conferir.
 
+🚧 **Deploy: código pronto, falta o usuário criar as contas.**
+Login, adaptador Turso, build e guia estão prontos e testados no que dá para testar local
+(senha certa/errada, logout, rota protegida não vazando dado, build de produção passando).
+⚠️ **O caminho Turso ainda não foi testado de verdade** — depende de credenciais que só o
+usuário pode criar. Se der erro no primeiro deploy, é o primeiro lugar para olhar.
+
 📋 **Ideias / possíveis próximos passos** (nenhuma pedida ainda):
 
 - Impressão da lista de mesas para a portaria
@@ -309,6 +335,7 @@ partir do layout, não a olho nu. Vale abrir e conferir.
 | 2026-08-18 | `/mapa` reescrito como planta espacial real (zonas, posições, orientação das mesas) |
 | 2026-08-18 | Cor por grupo/família derivada do `label` da mesa (`lib/grupos.ts`) |
 | 2026-08-18 | Planta corrigida pelo usuário: **72 mesas / 328 lugares**; banco zerado e planta aplicada |
+| 2026-08-18 | Usuário decidiu **hospedar o site** para acessar de qualquer lugar → login por senha (D-05 revisada), suporte a Turso (D-12) e guia [DEPLOY.md](DEPLOY.md) |
 
 ---
 

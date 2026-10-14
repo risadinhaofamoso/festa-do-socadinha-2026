@@ -1,5 +1,9 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  // Necessario para o adaptador libSQL (Turso) usado em producao.
+  // O provider continua "sqlite", entao local e nuvem compartilham
+  // o mesmo schema e as mesmas migracoes.
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
