@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PartyPopper, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
+import { Bola } from "@/components/tema/ilustracoes";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,9 +37,9 @@ export function LoginForm({ destino }: { destino: string }) {
     <Card className="w-full max-w-sm animate-pop-in">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-2">
-          <PartyPopper className="h-10 w-10 text-primary" />
+          <Bola size={44} className="animate-spin-slow" />
         </div>
-        <CardTitle className="texto-neon text-xl">Festa do Socadinha 2026</CardTitle>
+        <CardTitle className="texto-neon text-xl">FUT-SD · Futebol de Quarta</CardTitle>
         <CardDescription>Digite a senha para acessar o painel.</CardDescription>
       </CardHeader>
       <CardContent>

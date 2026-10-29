@@ -8,7 +8,7 @@ import {
   configAcesso,
   gerarTokenSessao,
 } from "@/lib/auth";
-import type { ActionResult } from "@/lib/actions/config";
+import type { ActionResult } from "@/lib/action-result";
 
 export async function entrar(senha: string): Promise<ActionResult> {
   const acesso = configAcesso();

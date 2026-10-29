@@ -3,30 +3,27 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard,
-  Armchair,
-  Users,
-  UserCheck,
-  Wallet,
-  Settings,
-  PartyPopper,
-  Gift,
+  Trophy,
+  IdCard,
+  Shuffle,
+  CalendarDays,
+  UserPlus,
+  Vote,
   Menu,
   LogOut,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Rosquinha } from "@/components/tema/ilustracoes";
+import { Bola } from "@/components/tema/ilustracoes";
 import { sair } from "@/lib/actions/auth";
 
 const ITEMS = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/mapa", label: "Mapa do Salão", icon: Armchair },
-  { href: "/convidados", label: "Convidados", icon: Users },
-  { href: "/checkin", label: "Check-in", icon: UserCheck },
-  { href: "/sorteio", label: "Sorteio", icon: Gift },
-  { href: "/financeiro", label: "Financeiro", icon: Wallet },
-  { href: "/configuracoes", label: "Configurações", icon: Settings },
+  { href: "/", label: "Tabela Geral", icon: Trophy },
+  { href: "/jogadores", label: "Jogadores", icon: IdCard },
+  { href: "/gerar", label: "Gerar Times", icon: Shuffle },
+  { href: "/partidas", label: "Partidas", icon: CalendarDays },
+  { href: "/votar", label: "Votação", icon: Vote },
+  { href: "/usuarios", label: "Cadastrar", icon: UserPlus },
 ];
 
 export function Sidebar({ protegido }: { protegido: boolean }) {
@@ -34,7 +31,7 @@ export function Sidebar({ protegido }: { protegido: boolean }) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
 
-  // A tela de login não tem menu.
+  // A tela de login nao tem menu.
   if (pathname.startsWith("/login")) return null;
 
   async function handleSair() {
@@ -47,8 +44,8 @@ export function Sidebar({ protegido }: { protegido: boolean }) {
     <>
       <div className="md:hidden flex items-center justify-between border-b p-3 sticky top-0 bg-background z-40">
         <div className="flex items-center gap-2 font-semibold">
-          <Rosquinha size={26} className="animate-spin-slow" />
-          Festa 2026
+          <Bola size={26} className="animate-spin-slow" />
+          FUT-SD
         </div>
         <button
           onClick={() => setAberto((v) => !v)}
@@ -67,10 +64,10 @@ export function Sidebar({ protegido }: { protegido: boolean }) {
       >
         <div className="hidden md:flex flex-col gap-1 px-5 py-5">
           <div className="flex items-center gap-2.5 font-bold text-lg">
-            <Rosquinha size={32} className="animate-spin-slow shrink-0" />
-            Festa 2026
+            <Bola size={32} className="animate-spin-slow shrink-0" />
+            FUT-SD
           </div>
-          <p className="text-xs text-muted-foreground pl-[42px] -mt-0.5">Tema: Simpsons</p>
+          <p className="text-xs text-muted-foreground pl-[42px] -mt-0.5">Futebol de quarta · 2026</p>
         </div>
         <nav className="flex-1 px-3 py-2 md:py-0 flex flex-col gap-1">
           {ITEMS.map((item, i) => {
@@ -113,8 +110,8 @@ export function Sidebar({ protegido }: { protegido: boolean }) {
           </div>
         )}
         <div className="px-5 py-4 text-xs text-muted-foreground border-t flex items-center gap-2">
-          <PartyPopper className="h-3.5 w-3.5 animate-wiggle" />
-          {protegido ? "Acesso protegido por senha" : "Uso local · SQLite"}
+          <Bola className="h-3.5 w-3.5" />
+          {protegido ? "Acesso protegido por senha" : "Bola rolando ⚽"}
         </div>
       </aside>
     </>

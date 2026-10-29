@@ -1,74 +1,80 @@
 import { z } from "zod";
-import { GIFT_TYPE_VALUES, PAYMENT_STATUS_VALUES } from "@/lib/types";
+import { POSICOES, PE_PREFERIDO } from "@/lib/types";
 
-export const configSalaoSchema = z.object({
-  quantidadeMesas: z
-    .number({ invalid_type_error: "Informe um número de mesas válido." })
-    .int("A quantidade de mesas deve ser um número inteiro.")
-    .min(1, "É preciso ao menos 1 mesa.")
-    .max(2000, "Quantidade de mesas muito alta."),
-  capacidadePorMesa: z
-    .number({ invalid_type_error: "Informe uma capacidade válida." })
-    .int("A capacidade deve ser um número inteiro.")
-    .min(1, "A capacidade deve ser de ao menos 1 lugar.")
-    .max(100, "Capacidade por mesa muito alta."),
+const atributo = z.coerce.number().int().min(0).max(99);
+const estrelas = z.coerce.number().int().min(1).max(5);
+
+export const jogadorSchema = z.object({
+  name: z.string().trim().min(2, "Informe o nome do jogador."),
+  nickname: z.string().trim().max(40).optional().or(z.literal("")),
+  position: z.enum(POSICOES),
+  photoUrl: z.string().optional().or(z.literal("")),
+  active: z.boolean().default(true),
+
+  overall: atributo,
+  pace: atributo,
+  shooting: atributo,
+  passing: atributo,
+  dribbling: atributo,
+  defending: atributo,
+  physical: atributo,
+  crossing: atributo,
+  preferredFoot: z.enum(PE_PREFERIDO).default("D"),
+  weakFoot: estrelas.default(3),
+  skillMoves: estrelas.default(3),
 });
 
-export const editarMesaSchema = z.object({
-  id: z.number().int(),
-  number: z.number().int().min(1, "Número da mesa inválido."),
-  label: z.string().trim().max(120).optional().nullable(),
-  capacity: z.number().int().min(1, "Capacidade deve ser ao menos 1."),
+export type JogadorInput = z.infer<typeof jogadorSchema>;
+
+/** Validacao da foto enviada: so imagem e ate ~1.5MB em data URL. */
+export const fotoSchema = z
+  .string()
+  .refine((v) => v === "" || v.startsWith("data:image/"), "A foto precisa ser uma imagem.")
+  .refine((v) => v.length < 2_000_000, "A foto e muito grande (reduza para menos de ~1,5MB).");
+
+export const criarComTimesSchema = z.object({
+  data: z.coerce.date().optional(),
+  timeA: z.array(z.number().int()).min(1, "O time A precisa de pelo menos 1 jogador."),
+  timeB: z.array(z.number().int()).min(1, "O time B precisa de pelo menos 1 jogador."),
+  torcida: z.array(z.number().int()).default([]),
 });
 
-export const novaMesaSchema = z.object({
-  number: z.number().int().min(1, "Número da mesa inválido."),
-  label: z.string().trim().max(120).optional().nullable(),
-  capacity: z.number().int().min(1, "Capacidade deve ser ao menos 1.").max(100),
+export const definirTimesSchema = z.object({
+  matchId: z.number().int(),
+  timeA: z.array(z.number().int()),
+  timeB: z.array(z.number().int()),
+  torcida: z.array(z.number().int()).default([]),
 });
 
-export const guestSchema = z.object({
-  name: z.string().trim().min(1, "Informe o nome do titular."),
-  phone: z.string().trim().max(30).optional().nullable(),
-  notes: z.string().trim().max(500).optional().nullable(),
+export const resultadoSchema = z.object({
+  matchId: z.number().int(),
+  scoreA: z.coerce.number().int().min(0).max(99),
+  scoreB: z.coerce.number().int().min(0).max(99),
+  durationSeconds: z.coerce.number().int().min(0).optional(),
 });
 
-export const inviteSchema = z.object({
-  number: z
-    .number({ invalid_type_error: "Informe o número do convite." })
-    .int("O número do convite deve ser inteiro.")
-    .positive("O número do convite deve ser positivo."),
-  guestId: z.number().int().positive("Selecione o titular do convite."),
-  attendeeName: z.string().trim().min(1, "Informe quem vai usar o convite."),
-  price: z
-    .number({ invalid_type_error: "Informe um preço válido." })
-    .min(0, "O preço não pode ser negativo."),
-  paymentStatus: z.enum(PAYMENT_STATUS_VALUES, {
-    errorMap: () => ({ message: "Status de pagamento inválido." }),
-  }),
-  paymentMethod: z.string().trim().max(60).optional().nullable(),
-  giftType: z.enum(GIFT_TYPE_VALUES, {
-    errorMap: () => ({ message: "Tipo de brinde inválido." }),
-  }),
-});
+/** CPF: so os digitos, exatamente 11. Valida os digitos verificadores. */
+function cpfValido(cpf: string): boolean {
+  const n = cpf.replace(/\D/g, "");
+  if (n.length !== 11 || /^(\d)\1{10}$/.test(n)) return false;
+  const calc = (base: string, pesoInicial: number) => {
+    let soma = 0;
+    for (let i = 0; i < base.length; i++) soma += Number(base[i]) * (pesoInicial - i);
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+  const d1 = calc(n.slice(0, 9), 10);
+  const d2 = calc(n.slice(0, 10), 11);
+  return d1 === Number(n[9]) && d2 === Number(n[10]);
+}
 
-export const inviteUpdateSchema = inviteSchema.extend({
-  id: z.number().int().positive(),
+export const votoSchema = z.object({
+  matchId: z.number().int(),
+  team: z.enum(["A", "B"]),
+  votedPlayerId: z.number().int(),
+  voterName: z.string().trim().min(3, "Informe seu nome e sobrenome."),
+  voterCpf: z
+    .string()
+    .transform((v) => v.replace(/\D/g, ""))
+    .refine(cpfValido, "CPF invalido. Confira os numeros."),
 });
-
-export const csvInviteRowSchema = z.object({
-  titular: z.string().trim().min(1, "Nome do titular é obrigatório."),
-  atendente: z.string().trim().min(1, "Nome de quem usa o convite é obrigatório."),
-  numero: z
-    .number({ invalid_type_error: "Número do convite inválido." })
-    .int()
-    .positive("Número do convite deve ser positivo."),
-  preco: z.number({ invalid_type_error: "Preço inválido." }).min(0, "Preço não pode ser negativo."),
-  formaPagamento: z.string().trim().optional().nullable(),
-  statusPagamento: z.enum(PAYMENT_STATUS_VALUES).optional(),
-  brinde: z.enum(GIFT_TYPE_VALUES, {
-    errorMap: () => ({ message: "Tipo de brinde inválido." }),
-  }),
-});
-
-export type CsvInviteRow = z.infer<typeof csvInviteRowSchema>;

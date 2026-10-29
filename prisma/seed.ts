@@ -1,133 +1,135 @@
 import { PrismaClient } from "@prisma/client";
+import { overallPorRanking, gerarAtributos, hashString } from "../lib/jogadores";
+import type { Posicao } from "../lib/types";
 
 const prisma = new PrismaClient();
 
-const PRIMEIROS_NOMES = [
-  "João", "Maria", "Pedro", "Ana", "Carlos", "Fernanda", "Lucas", "Juliana",
-  "Marcos", "Patrícia", "Rafael", "Camila", "Bruno", "Larissa", "Felipe",
-  "Beatriz", "Gustavo", "Aline", "Rodrigo", "Priscila",
+/**
+ * Estado consolidado na 35a partida, transcrito da planilha oficial.
+ * Ordem = colocacao na tabela. Pts = pontuacao exibida (vira basePoints).
+ *   nome, apelido?, jogos, V, E, D, participacao(torcida), melhorEmCampo, pts, goleiro?
+ */
+type Entrada = {
+  nome: string;
+  apelido?: string;
+  j: number;
+  v: number;
+  e: number;
+  d: number;
+  p: number;
+  m: number;
+  pts: number;
+  goleiro?: boolean;
+};
+
+const JOGADORES: Entrada[] = [
+  { nome: "Caio Couto", j: 34, v: 14, e: 7, d: 13, p: 0, m: 3, pts: 120 },
+  { nome: "Allan Minossi", j: 29, v: 16, e: 6, d: 7, p: 1, m: 5, pts: 119 },
+  { nome: "Gabriel Aguilera", j: 31, v: 13, e: 7, d: 11, p: 3, m: 1, pts: 115 },
+  { nome: "Canela", j: 33, v: 13, e: 6, d: 14, p: 1, m: 1, pts: 114 },
+  { nome: "Bruno Toffoli", j: 33, v: 11, e: 7, d: 15, p: 0, m: 1, pts: 107 },
+  { nome: "Matheus Castilho", j: 28, v: 13, e: 5, d: 10, p: 1, m: 0, pts: 102 },
+  { nome: "Matheus Hasse", j: 27, v: 11, e: 5, d: 11, p: 2, m: 1, pts: 97 },
+  { nome: "Everton Hommer", j: 26, v: 10, e: 5, d: 11, p: 0, m: 1, pts: 88 },
+  { nome: "Rafael", j: 22, v: 12, e: 4, d: 6, p: 1, m: 1, pts: 87 },
+  { nome: "Matheus Kern", j: 22, v: 7, e: 4, d: 11, p: 5, m: 0, pts: 79 },
+  { nome: "Cavani", j: 21, v: 8, e: 5, d: 8, p: 4, m: 0, pts: 79 },
+  { nome: "Claitinho", j: 18, v: 9, e: 4, d: 5, p: 3, m: 5, pts: 78 },
+  { nome: "Matheus Angellos", j: 18, v: 9, e: 4, d: 5, p: 0, m: 1, pts: 68 },
+  { nome: "Dudu", j: 19, v: 7, e: 3, d: 9, p: 0, m: 0, pts: 63 },
+  { nome: "Guilherme Coletto", j: 14, v: 4, e: 2, d: 8, p: 9, m: 1, pts: 61 },
+  { nome: "Naum", j: 9, v: 3, e: 2, d: 4, p: 14, m: 1, pts: 58 },
+  { nome: "Odilon", j: 16, v: 6, e: 4, d: 6, p: 0, m: 1, pts: 55 },
+  { nome: "Rodrigo Toffoli", j: 15, v: 4, e: 5, d: 6, p: 1, m: 0, pts: 49 },
+  { nome: "Lucas Castagna", j: 10, v: 3, e: 2, d: 5, p: 6, m: 2, pts: 45 },
+  { nome: "Léo Cunha", j: 13, v: 4, e: 4, d: 5, p: 1, m: 1, pts: 45, goleiro: true },
+  { nome: "José Otávio", j: 11, v: 6, e: 1, d: 4, p: 0, m: 2, pts: 43, goleiro: true },
+  { nome: "Lucca", j: 11, v: 6, e: 2, d: 3, p: 0, m: 0, pts: 42 },
+  { nome: "Alemão", j: 11, v: 3, e: 4, d: 4, p: 2, m: 1, pts: 40, goleiro: true },
+  { nome: "Giuliano Leal", j: 11, v: 3, e: 2, d: 6, p: 0, m: 0, pts: 33 },
+  { nome: "Leandro Luz", apelido: "Porco", j: 10, v: 2, e: 2, d: 6, p: 2, m: 0, pts: 32, goleiro: true },
+  { nome: "Gianluca", j: 8, v: 4, e: 2, d: 2, p: 0, m: 0, pts: 30 },
+  { nome: "Eduardo", apelido: "Duca", j: 8, v: 2, e: 2, d: 3, p: 0, m: 2, pts: 29, goleiro: true },
+  { nome: "Diego", j: 7, v: 3, e: 1, d: 3, p: 0, m: 1, pts: 25 },
+  { nome: "Dodo", j: 8, v: 1, e: 4, d: 3, p: 0, m: 0, pts: 23 },
+  { nome: "Jonathan", apelido: "Jaja", j: 5, v: 2, e: 2, d: 1, p: 1, m: 0, pts: 20 },
+  { nome: "Guilherme", j: 6, v: 2, e: 0, d: 4, p: 0, m: 0, pts: 18 },
+  { nome: "Jonathan Rodrigues", apelido: "Jow", j: 4, v: 3, e: 0, d: 1, p: 0, m: 0, pts: 17 },
+  { nome: "Lopes", j: 4, v: 3, e: 0, d: 1, p: 0, m: 0, pts: 17 },
+  { nome: "Augusto Fraga", j: 5, v: 1, e: 1, d: 3, p: 1, m: 0, pts: 16 },
+  { nome: "Lorenzo", j: 5, v: 2, e: 0, d: 3, p: 0, m: 0, pts: 16 },
+  { nome: "Gabriel", j: 5, v: 1, e: 2, d: 2, p: 0, m: 0, pts: 15 },
+  { nome: "João Victor", apelido: "JV", j: 3, v: 1, e: 1, d: 1, p: 0, m: 1, pts: 11, goleiro: true },
+  { nome: "Raul Kober", j: 3, v: 1, e: 1, d: 1, p: 0, m: 0, pts: 10 },
+  { nome: "Mãezinha", j: 3, v: 1, e: 0, d: 2, p: 0, m: 1, pts: 10 },
+  { nome: "Marlon", j: 2, v: 2, e: 0, d: 0, p: 0, m: 0, pts: 10 },
+  { nome: "Vini", j: 3, v: 0, e: 1, d: 2, p: 0, m: 0, pts: 7 },
+  { nome: "João Pedro", j: 2, v: 1, e: 0, d: 1, p: 0, m: 0, pts: 7, goleiro: true },
+  { nome: "Vicenzo", j: 2, v: 1, e: 0, d: 1, p: 0, m: 0, pts: 7 },
+  { nome: "Lipe", j: 3, v: 0, e: 0, d: 0, p: 0, m: 0, pts: 6 },
+  { nome: "Pedro", j: 1, v: 1, e: 0, d: 0, p: 0, m: 0, pts: 5 },
+  { nome: "John", j: 1, v: 0, e: 0, d: 1, p: 0, m: 0, pts: 2 },
+  { nome: "Mânica", j: 1, v: 0, e: 0, d: 1, p: 0, m: 0, pts: 2 },
 ];
 
-const SOBRENOMES = [
-  "Silva", "Souza", "Oliveira", "Santos", "Pereira", "Costa", "Rodrigues",
-  "Almeida", "Nascimento", "Lima", "Araújo", "Ribeiro", "Carvalho", "Gomes",
-  "Martins", "Rocha", "Barbosa", "Freitas", "Cardoso", "Teixeira",
-];
-
-const FORMAS_PAGAMENTO = ["Dinheiro", "Pix", "Cartão de crédito", "Cartão de débito", "Transferência"];
-
-function nomeAleatorio(rand: () => number) {
-  const primeiro = PRIMEIROS_NOMES[Math.floor(rand() * PRIMEIROS_NOMES.length)];
-  const sobrenome = SOBRENOMES[Math.floor(rand() * SOBRENOMES.length)];
-  return `${primeiro} ${sobrenome}`;
-}
-
-// PRNG simples e determinístico para gerar sempre os mesmos dados de teste
-function mulberry32(seed: number) {
-  return function () {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+/** Posicoes de linha, distribuidas de forma deterministica entre os nao-goleiros. */
+const POSICOES_LINHA: Posicao[] = ["ZAGUEIRO", "LATERAL", "VOLANTE", "MEIA", "ATACANTE"];
 
 async function main() {
-  const rand = mulberry32(42);
+  console.log("Limpando dados antigos...");
+  await prisma.vote.deleteMany();
+  await prisma.participation.deleteMany();
+  await prisma.match.deleteMany();
+  await prisma.player.deleteMany();
 
-  console.log("Limpando dados existentes...");
-  await prisma.invite.deleteMany();
-  await prisma.seat.deleteMany();
-  await prisma.table.deleteMany();
-  await prisma.guest.deleteMany();
+  const total = JOGADORES.length;
+  let indiceLinha = 0;
 
-  console.log("Criando mesas e lugares de exemplo (10 mesas x 8 lugares)...");
-  const QUANTIDADE_MESAS = 10;
-  const CAPACIDADE = 8;
+  for (let i = 0; i < total; i++) {
+    const e = JOGADORES[i];
+    const rank = i + 1;
+    const overall = overallPorRanking(rank, total);
+    const posicao: Posicao = e.goleiro
+      ? "GOLEIRO"
+      : POSICOES_LINHA[indiceLinha++ % POSICOES_LINHA.length];
 
-  const tables = [];
-  for (let n = 1; n <= QUANTIDADE_MESAS; n++) {
-    const table = await prisma.table.create({
+    const attrs = gerarAtributos(overall, posicao, e.nome);
+    const h = hashString(e.nome);
+
+    await prisma.player.create({
       data: {
-        number: n,
-        capacity: CAPACIDADE,
-        label: n === 1 ? "Mesa dos noivos" : null,
-        seats: {
-          create: Array.from({ length: CAPACIDADE }, (_, i) => ({
-            seatNumber: i + 1,
-          })),
-        },
-      },
-      include: { seats: true },
-    });
-    tables.push(table);
-  }
-
-  const allSeats = tables.flatMap((t) => t.seats);
-
-  console.log("Criando convidados e convites de exemplo...");
-  let inviteNumber = 1;
-  let seatCursor = 0;
-
-  for (let i = 0; i < 20; i++) {
-    const titular = nomeAleatorio(rand);
-    const guest = await prisma.guest.create({
-      data: {
-        name: titular,
-        phone:
-          rand() > 0.3
-            ? `(11) 9${Math.floor(1000 + rand() * 8999)}-${Math.floor(1000 + rand() * 8999)}`
-            : null,
-        notes: rand() > 0.85 ? "Confirmar restrição alimentar." : null,
+        name: e.nome,
+        nickname: e.apelido ?? null,
+        position: posicao,
+        active: true,
+        overall: attrs.overall,
+        pace: attrs.pace,
+        shooting: attrs.shooting,
+        passing: attrs.passing,
+        dribbling: attrs.dribbling,
+        defending: attrs.defending,
+        physical: attrs.physical,
+        crossing: attrs.crossing,
+        preferredFoot: h % 5 === 0 ? "E" : "D",
+        weakFoot: 2 + (h % 4),
+        skillMoves: posicao === "GOLEIRO" ? 1 + (h % 2) : 2 + (h % 4),
+        baseWins: e.v,
+        baseDraws: e.e,
+        baseLosses: e.d,
+        baseJogos: e.j,
+        baseParticipacoes: e.p,
+        baseMelhorEmCampo: e.m,
+        basePoints: e.pts,
       },
     });
-
-    const quantidadeConvites = 1 + Math.floor(rand() * 3); // 1 a 3 convites por titular
-
-    for (let c = 0; c < quantidadeConvites; c++) {
-      const usaOutroNome = rand() > 0.6;
-      const attendeeName = usaOutroNome ? nomeAleatorio(rand) : titular;
-
-      const statusRoll = rand();
-      const paymentStatus = statusRoll < 0.6 ? "PAGO" : statusRoll < 0.85 ? "PENDENTE" : "PARCIAL";
-
-      const giftType = rand() > 0.5 ? "CONVITE_CAMISA_CANECA" : "SOMENTE_CONVITE";
-      const price = giftType === "CONVITE_CAMISA_CANECA" ? 180 : 120;
-
-      const atribuirLugar = seatCursor < allSeats.length && rand() > 0.25;
-      const seat = atribuirLugar ? allSeats[seatCursor] : null;
-      if (atribuirLugar) seatCursor++;
-
-      const fezCheckin = seat !== null && rand() > 0.6;
-
-      await prisma.invite.create({
-        data: {
-          number: inviteNumber++,
-          guestId: guest.id,
-          attendeeName,
-          price,
-          paymentStatus,
-          paymentMethod:
-            paymentStatus !== "PENDENTE"
-              ? FORMAS_PAGAMENTO[Math.floor(rand() * FORMAS_PAGAMENTO.length)]
-              : null,
-          giftType,
-          seatId: seat?.id,
-          checkedIn: fezCheckin,
-          checkedInAt: fezCheckin ? new Date() : null,
-        },
-      });
-    }
   }
 
-  const totalConvites = await prisma.invite.count();
-  console.log(`Seed concluído: ${tables.length} mesas, ${allSeats.length} lugares, ${totalConvites} convites.`);
+  console.log(`Seed concluida: ${total} jogadores cadastrados (estado da 35a partida).`);
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch((err) => {
+    console.error(err);
     process.exit(1);
   })
   .finally(async () => {

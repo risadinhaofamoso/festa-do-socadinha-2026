@@ -16,8 +16,8 @@ const fontMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Festa do Socadinha 2026 — Painel de Controle",
-  description: "Controle de reservas, convites e financeiro da festa",
+  title: "FUT-SD · Futebol de Quarta",
+  description: "Tabela, cartinhas, geração de times e votação do nosso futebol de quarta-feira",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

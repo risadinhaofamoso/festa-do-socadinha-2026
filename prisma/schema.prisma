@@ -13,84 +13,115 @@ datasource db {
 
 // SQLite nao suporta enums nativos no Prisma; os valores validos sao
 // validados via Zod (lib/validations.ts) e tipados em lib/types.ts:
-// PaymentStatus: "PAGO" | "PENDENTE" | "PARCIAL"
-// GiftType: "SOMENTE_CONVITE" | "CONVITE_CAMISA_CANECA"
+//   Posicao: "GOLEIRO" | "ZAGUEIRO" | "LATERAL" | "VOLANTE" | "MEIA" | "ATACANTE"
+//   StatusPartida: "CRIADA" | "EM_ANDAMENTO" | "FINALIZADA"
+//   Time: "A" | "B"
+//   PapelPartida: "JOGADOR" | "TORCIDA"
 
-model Table {
-  id        Int      @id @default(autoincrement())
-  number    Int      @unique
-  capacity  Int
-  // label = nome do grupo/familia dono da mesa (ex: "GRUPO VILLELA").
-  // A cor da mesa no mapa e derivada deste nome (ver lib/grupos.ts).
-  label     String?
-  // Posicao no mapa do salao, no sistema de coordenadas de lib/layout-salao.ts.
-  // Nulo = mesa sem posicao definida (cai na area "sem posicao" do mapa).
-  positionX Int?
-  positionY Int?
-  // "H" = mesa deitada (lugares em cima e embaixo)
-  // "V" = mesa em pe (lugares nas laterais esquerda e direita)
-  orientation String @default("H")
-  seats     Seat[]
+/// Jogador da pelada de quarta. Guarda os dados da cartinha (estilo FIFA) e
+/// o "carry-over" historico: o estado consolidado na 35a partida, importado
+/// da planilha. As partidas lancadas no site somam por cima disso.
+model Player {
+  id       Int     @id @default(autoincrement())
+  name     String
+  nickname String?
+  // GOLEIRO | ZAGUEIRO | LATERAL | VOLANTE | MEIA | ATACANTE
+  position String  @default("MEIA")
+  // Foto da cartinha, guardada como data URL (base64) ou caminho. Pode ser nula.
+  photoUrl String?
+  active   Boolean @default(true)
+
+  // ---- Atributos da cartinha (0-99). Genericos por enquanto, derivados da
+  //      colocacao na tabela; o usuario ajusta depois. ----
+  overall       Int    @default(70)
+  pace          Int    @default(70) // ritmo
+  shooting      Int    @default(70) // chute
+  passing       Int    @default(70) // passe
+  dribbling     Int    @default(70) // drible
+  defending     Int    @default(70) // defesa / marcacao
+  physical      Int    @default(70) // fisico
+  // Atributos extras que aparecem ao abrir a carta
+  crossing      Int    @default(70) // cruzamento
+  preferredFoot String @default("D") // D (direita) | E (esquerda)
+  weakFoot      Int    @default(3) // perna ruim, 1-5
+  skillMoves    Int    @default(3) // dribles/estrelas de habilidade, 1-5
+
+  // ---- Carry-over historico (estado na 35a partida) ----
+  baseWins          Int @default(0)
+  baseDraws         Int @default(0)
+  baseLosses        Int @default(0)
+  baseJogos         Int @default(0) // partidas em que entrou em campo
+  baseParticipacoes Int @default(0) // comparecimentos como torcida (presenca sem jogar)
+  baseMelhorEmCampo Int @default(0)
+  basePoints        Int @default(0) // pontuacao exibida na planilha original
+
+  participations Participation[]
+  votesReceived  Vote[]          @relation("VotesReceived")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("tables")
+  @@map("players")
 }
 
-model Seat {
-  id         Int     @id @default(autoincrement())
-  tableId    Int
-  table      Table   @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  seatNumber Int
-  invite     Invite?
+/// Uma partida (um dia de pelada: Time A x Time B).
+model Match {
+  id     Int      @id @default(autoincrement())
+  number Int      @unique // numero da partida no ano (36, 37, ...)
+  date   DateTime @default(now())
+  // CRIADA | EM_ANDAMENTO | FINALIZADA
+  status String   @default("CRIADA")
 
-  @@unique([tableId, seatNumber])
-  @@map("seats")
-}
+  scoreA          Int?
+  scoreB          Int?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  durationSeconds Int?
+  // Enquanto aberta, qualquer um pode votar no melhor em campo pela tela publica.
+  votingOpen      Boolean   @default(false)
 
-model Guest {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String?
-  notes     String?
-  invites   Invite[]
+  participations Participation[]
+  votes          Vote[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("guests")
+  @@map("matches")
 }
 
-model Invite {
-  id            Int           @id @default(autoincrement())
-  number        Int           @unique
-  guestId       Int
-  guest         Guest         @relation(fields: [guestId], references: [id], onDelete: Cascade)
-  attendeeName  String
-  price         Float
-  paymentStatus String    @default("PENDENTE")
-  paymentMethod String?
-  giftType      String    @default("SOMENTE_CONVITE")
-  seatId        Int?      @unique
-  seat          Seat?     @relation(fields: [seatId], references: [id], onDelete: SetNull)
-  checkedIn     Boolean   @default(false)
-  checkedInAt   DateTime?
-  draw          Draw?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+/// Presenca de um jogador numa partida. role=JOGADOR entrou em campo (ganha
+/// resultado + presenca); role=TORCIDA so compareceu (ganha so presenca).
+model Participation {
+  id       Int     @id @default(autoincrement())
+  matchId  Int
+  playerId Int
+  // "A" | "B" | null (torcida nao tem time)
+  team     String?
+  // JOGADOR | TORCIDA
+  role     String  @default("JOGADOR")
+  isMotm   Boolean @default(false) // melhor em campo (apurado pela votacao)
 
-  @@map("invites")
+  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, playerId])
+  @@map("participations")
 }
 
-// Sorteio de brindes durante a festa.
-// inviteId e unico: cada convite so pode ser sorteado uma vez.
-model Draw {
-  id          Int       @id @default(autoincrement())
-  inviteId    Int       @unique
-  invite      Invite    @relation(fields: [inviteId], references: [id], onDelete: Cascade)
-  prize       String
-  delivered   Boolean   @default(false)
-  deliveredAt DateTime?
-  drawnAt     DateTime  @default(now())
+/// Voto de melhor em campo. Um voto por CPF por time, por partida.
+/// A votacao abre por time: so o time vencedor (ou os dois, em caso de empate).
+model Vote {
+  id            Int      @id @default(autoincrement())
+  matchId       Int
+  team          String // "A" | "B"
+  votedPlayerId Int
+  voterCpf      String
+  voterName     String
+  createdAt     DateTime @default(now())
 
-  @@map("draws")
+  match       Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  votedPlayer Player @relation("VotesReceived", fields: [votedPlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, team, voterCpf])
+  @@map("votes")
 }

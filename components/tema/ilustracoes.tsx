@@ -1,9 +1,9 @@
 /*
-  Ilustrações SVG originais no estilo da festa (amarelo/azul, rosquinha, nuvens).
-  Desenhos próprios — nenhum personagem protegido por direitos autorais.
+  Ilustracoes SVG originais no tema do futebol de quarta (dourado/neon).
+  Desenhos proprios — nada protegido por direitos autorais.
 */
 
-export function Rosquinha({ className, size = 48 }: { className?: string; size?: number }) {
+export function Bola({ className, size = 48 }: { className?: string; size?: number }) {
   return (
     <svg
       className={className}
@@ -13,26 +13,48 @@ export function Rosquinha({ className, size = 48 }: { className?: string; size?:
       fill="none"
       aria-hidden="true"
     >
-      <circle cx="50" cy="50" r="42" fill="#E8A33D" />
+      <circle cx="50" cy="50" r="44" fill="#fdf6e3" stroke="#0c0c10" strokeWidth="3" />
       <path
-        d="M50 12c21 0 38 17 38 38S71 88 50 88 12 71 12 50s17-38 38-38Z"
-        fill="#F2B75B"
+        d="M50 22l14 10-5 17H41l-5-17 14-10Z"
+        fill="#0c0c10"
       />
-      <path
-        d="M50 15c19.3 0 35 15.7 35 35 0 3.4-.5 6.6-1.4 9.7-1 3.3-5.3 3.3-7.4.9-2.4-2.8-6.6-3-9.2-.4-2.4 2.4-6.4 2.2-8.6-.4-2.4-2.9-6.9-2.9-9.3 0-2.2 2.6-6.2 2.8-8.6.4-2.6-2.6-6.8-2.4-9.2.4-2.1 2.4-6.4 2.4-7.4-.9A35.2 35.2 0 0 1 15 50c0-19.3 15.7-35 35-35Z"
-        fill="#FF9DBB"
-      />
-      <circle cx="50" cy="50" r="15" fill="#C98A2E" />
-      <circle cx="50" cy="50" r="13" fill="#FDF6E3" />
-      <g>
-        <rect x="33" y="27" width="7" height="3" rx="1.5" fill="#4FC3F7" transform="rotate(-25 33 27)" />
-        <rect x="58" y="26" width="7" height="3" rx="1.5" fill="#8BC34A" transform="rotate(20 58 26)" />
-        <rect x="24" y="42" width="7" height="3" rx="1.5" fill="#FFEB3B" transform="rotate(60 24 42)" />
-        <rect x="70" y="41" width="7" height="3" rx="1.5" fill="#FF7043" transform="rotate(-50 70 41)" />
-        <rect x="44" y="20" width="7" height="3" rx="1.5" fill="#AB47BC" transform="rotate(10 44 20)" />
-        <rect x="64" y="55" width="7" height="3" rx="1.5" fill="#4FC3F7" transform="rotate(35 64 55)" />
-        <rect x="27" y="57" width="7" height="3" rx="1.5" fill="#8BC34A" transform="rotate(-40 27 57)" />
-      </g>
+      <path d="M50 22V8M64 32l12-8M59 49l15 5M41 49l-15 5M36 32l-12-8" stroke="#0c0c10" strokeWidth="3" />
+      <path d="M26 54l-4 15 14 9 11-9-6-15H26Z" fill="#0c0c10" opacity="0.9" />
+      <path d="M74 54l4 15-14 9-11-9 6-15h15Z" fill="#0c0c10" opacity="0.9" />
+      <circle cx="50" cy="50" r="44" fill="none" stroke="#f5c518" strokeWidth="2" opacity="0.5" />
+    </svg>
+  );
+}
+
+export function Trofeu({ className, size = 32 }: { className?: string; size?: number }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d="M20 10h24v12a12 12 0 0 1-24 0V10Z" fill="currentColor" />
+      <path d="M20 14H12v4a8 8 0 0 0 8 8M44 14h8v4a8 8 0 0 1-8 8" stroke="currentColor" strokeWidth="3" fill="none" />
+      <rect x="28" y="34" width="8" height="10" fill="currentColor" />
+      <rect x="20" y="44" width="24" height="6" rx="2" fill="currentColor" />
+      <rect x="16" y="50" width="32" height="5" rx="2" fill="currentColor" opacity="0.8" />
+    </svg>
+  );
+}
+
+export function Apito({ className, size = 32 }: { className?: string; size?: number }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d="M8 30h26l8-6v18l-8-6H8a6 6 0 0 1 0-12Z" fill="currentColor" opacity="0.9" />
+      <circle cx="46" cy="33" r="14" fill="currentColor" />
+      <circle cx="46" cy="33" r="5" fill="#0c0c10" />
+      <path d="M46 19V9M55 22l7-7M57 33h10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+    </svg>
+  );
+}
+
+export function Chuteira({ className, size = 32 }: { className?: string; size?: number }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d="M8 28c6-2 12-3 20-2 10 1 16 6 28 8 2 .4 2 6 0 8H10a2 2 0 0 1-2-2V28Z" fill="currentColor" opacity="0.9" />
+      <path d="M12 22c4 0 6 3 8 6M20 20c4 0 6 3 8 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
+      <path d="M14 44v4M24 44v4M34 44v4M44 44v4" stroke="#0c0c10" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }
@@ -62,28 +84,5 @@ export function NuvensAnimadas({ quantidade = 6 }: { quantidade?: number }) {
         />
       ))}
     </div>
-  );
-}
-
-export function Camiseta({ className, size = 32 }: { className?: string; size?: number }) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-      <path
-        d="M22 8 12 14l-4 12 8 3 2-5v32h28V24l2 5 8-3-4-12L42 8l-10 6-10-6Z"
-        fill="currentColor"
-        opacity="0.9"
-      />
-      <path d="M22 8c0 5.5 4.5 10 10 10s10-4.5 10-10" stroke="white" strokeWidth="2.5" fill="none" />
-    </svg>
-  );
-}
-
-export function Caneca({ className, size = 32 }: { className?: string; size?: number }) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-      <rect x="10" y="18" width="34" height="34" rx="5" fill="currentColor" opacity="0.9" />
-      <path d="M44 26h6a7 7 0 0 1 0 14h-6" stroke="currentColor" strokeWidth="4" fill="none" />
-      <path d="M20 10c0 3-3 3-3 6M28 10c0 3-3 3-3 6M36 10c0 3-3 3-3 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity="0.55" />
-    </svg>
   );
 }
