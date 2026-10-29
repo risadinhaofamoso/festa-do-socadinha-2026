@@ -2,7 +2,18 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Trophy, Shield, CalendarCheck, Star, Medal, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Trophy,
+  Shield,
+  CalendarCheck,
+  Star,
+  Medal,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+} from "lucide-react";
 import { Avatar } from "@/components/jogadores/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -63,6 +74,24 @@ function CardDestaque({
       </CardContent>
     </Card>
   );
+}
+
+function Variacao({ v }: { v: number }) {
+  if (v > 0)
+    return (
+      <span className="inline-flex items-center text-[var(--neon-green)] text-xs font-bold tabular-nums">
+        <ArrowUp className="h-3 w-3" />
+        {v}
+      </span>
+    );
+  if (v < 0)
+    return (
+      <span className="inline-flex items-center text-[var(--neon-red)] text-xs font-bold tabular-nums">
+        <ArrowDown className="h-3 w-3" />
+        {Math.abs(v)}
+      </span>
+    );
+  return <Minus className="h-3 w-3 text-muted-foreground/50 inline" />;
 }
 
 function Placar({ p }: { p: ResumoPartida }) {
@@ -179,18 +208,19 @@ export function TabelaGeral({
           <thead>
             <tr className="border-b bg-muted/40 text-xs uppercase text-muted-foreground">
               <th className="px-3 py-2.5 text-left">#</th>
+              <th className="px-1 py-2.5 text-center" title="Variação desde a última partida">↕</th>
               <th className="px-3 py-2.5 text-left">Jogador</th>
               <th className="px-2 py-2.5 text-center font-bold">Pts</th>
-              <th className="px-2 py-2.5 text-center">J</th>
+              <th className="px-2 py-2.5 text-center hidden sm:table-cell">J</th>
               <th className="px-2 py-2.5 text-center">V</th>
-              <th className="px-2 py-2.5 text-center">E</th>
+              <th className="px-2 py-2.5 text-center hidden sm:table-cell">E</th>
               <th className="px-2 py-2.5 text-center">D</th>
-              <th className="px-2 py-2.5 text-center" title="Participação (torcida)">Part</th>
-              <th className="px-2 py-2.5 text-center" title="Melhor em campo">
+              <th className="px-2 py-2.5 text-center hidden sm:table-cell" title="Participação (torcida)">Part</th>
+              <th className="px-2 py-2.5 text-center hidden sm:table-cell" title="Melhor em campo">
                 <Star className="h-3.5 w-3.5 inline" />
               </th>
-              <th className="px-2 py-2.5 text-center hidden sm:table-cell">Pres.%</th>
-              <th className="px-2 py-2.5 text-center hidden sm:table-cell">Aprov.%</th>
+              <th className="px-2 py-2.5 text-center hidden md:table-cell">Pres.%</th>
+              <th className="px-2 py-2.5 text-center hidden md:table-cell">Aprov.%</th>
             </tr>
           </thead>
           <tbody>
@@ -208,6 +238,9 @@ export function TabelaGeral({
                   <td className="px-3 py-2 font-bold tabular-nums">
                     <span className={cn(noG6 && "text-[var(--neon-gold)]")}>{l.posicaoTabela}º</span>
                   </td>
+                  <td className="px-1 py-2 text-center">
+                    <Variacao v={l.variacao} />
+                  </td>
                   <td className="px-3 py-2">
                     <Link href="/jogadores" className="flex items-center gap-2.5 group">
                       <Avatar nome={l.nome} foto={l.foto} size={30} />
@@ -223,16 +256,16 @@ export function TabelaGeral({
                     </Link>
                   </td>
                   <td className="px-2 py-2 text-center font-black tabular-nums text-base">{l.pontos}</td>
-                  <td className="px-2 py-2 text-center tabular-nums text-muted-foreground">{l.jogos}</td>
+                  <td className="px-2 py-2 text-center tabular-nums text-muted-foreground hidden sm:table-cell">{l.jogos}</td>
                   <td className="px-2 py-2 text-center tabular-nums text-[var(--neon-green)]">{l.vitorias}</td>
-                  <td className="px-2 py-2 text-center tabular-nums">{l.empates}</td>
+                  <td className="px-2 py-2 text-center tabular-nums hidden sm:table-cell">{l.empates}</td>
                   <td className="px-2 py-2 text-center tabular-nums text-[var(--neon-red)]">{l.derrotas}</td>
-                  <td className="px-2 py-2 text-center tabular-nums text-muted-foreground">{l.participacoes}</td>
-                  <td className="px-2 py-2 text-center tabular-nums font-semibold">{l.melhorEmCampo}</td>
-                  <td className="px-2 py-2 text-center tabular-nums hidden sm:table-cell text-muted-foreground">
+                  <td className="px-2 py-2 text-center tabular-nums text-muted-foreground hidden sm:table-cell">{l.participacoes}</td>
+                  <td className="px-2 py-2 text-center tabular-nums font-semibold hidden sm:table-cell">{l.melhorEmCampo}</td>
+                  <td className="px-2 py-2 text-center tabular-nums hidden md:table-cell text-muted-foreground">
                     {l.aproveitamentoPresenca.toFixed(0)}%
                   </td>
-                  <td className="px-2 py-2 text-center tabular-nums hidden sm:table-cell text-muted-foreground">
+                  <td className="px-2 py-2 text-center tabular-nums hidden md:table-cell text-muted-foreground">
                     {l.aproveitamentoVitoria.toFixed(0)}%
                   </td>
                 </tr>
@@ -240,7 +273,7 @@ export function TabelaGeral({
             })}
             {filtradas.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={12} className="px-3 py-8 text-center text-muted-foreground">
                   Nenhum jogador encontrado.
                 </td>
               </tr>

@@ -45,65 +45,87 @@ export async function carregarTabela(): Promise<DadosTabela> {
 
   const partidasRealizadas = PARTIDAS_BASE + partidasNovas;
 
-  const linhas: LinhaTabela[] = players.map((p) => {
-    let pts = p.basePoints;
-    let vit = p.baseWins;
-    let emp = p.baseDraws;
-    let der = p.baseLosses;
-    let jogos = p.baseJogos;
-    let torcida = p.baseParticipacoes;
-    let motm = p.baseMelhorEmCampo;
+  // Numero da ultima partida finalizada (para calcular a variacao de posicao).
+  const ultimoNumero = players
+    .flatMap((p) => p.participations)
+    .filter((pp) => pp.match.status === "FINALIZADA")
+    .reduce((max, pp) => Math.max(max, pp.match.number), 0);
 
-    for (const pp of p.participations) {
-      if (pp.match.status !== "FINALIZADA") continue;
-      pts += PONTOS.presenca;
-      if (pp.role === "TORCIDA") {
-        torcida += 1;
-      } else {
-        jogos += 1;
-        const r = vitoriaDoTime(pp.team, pp.match.scoreA, pp.match.scoreB);
-        if (r === "VITORIA") {
-          vit += 1;
-          pts += PONTOS.vitoria;
-        } else if (r === "EMPATE") {
-          emp += 1;
-          pts += PONTOS.empate;
-        } else if (r === "DERROTA") {
-          der += 1;
+  /** Acumula a tabela, opcionalmente ignorando uma partida (para a tabela "de antes"). */
+  const acumular = (ignorarNumero?: number): LinhaTabela[] => {
+    const linhas: LinhaTabela[] = players.map((p) => {
+      let pts = p.basePoints;
+      let vit = p.baseWins;
+      let emp = p.baseDraws;
+      let der = p.baseLosses;
+      let jogos = p.baseJogos;
+      let torcida = p.baseParticipacoes;
+      let motm = p.baseMelhorEmCampo;
+
+      for (const pp of p.participations) {
+        if (pp.match.status !== "FINALIZADA") continue;
+        if (ignorarNumero != null && pp.match.number === ignorarNumero) continue;
+        pts += PONTOS.presenca;
+        if (pp.role === "TORCIDA") {
+          torcida += 1;
+        } else {
+          jogos += 1;
+          const r = vitoriaDoTime(pp.team, pp.match.scoreA, pp.match.scoreB);
+          if (r === "VITORIA") {
+            vit += 1;
+            pts += PONTOS.vitoria;
+          } else if (r === "EMPATE") {
+            emp += 1;
+            pts += PONTOS.empate;
+          } else if (r === "DERROTA") {
+            der += 1;
+          }
+        }
+        if (pp.isMotm) {
+          motm += 1;
+          pts += PONTOS.melhorEmCampo;
         }
       }
-      if (pp.isMotm) {
-        motm += 1;
-        pts += PONTOS.melhorEmCampo;
-      }
+
+      const presencas = jogos + torcida;
+      return {
+        playerId: p.id,
+        nome: p.name,
+        apelido: p.nickname,
+        posicao: p.position as Posicao,
+        foto: p.photoUrl,
+        overall: p.overall,
+        pontos: pts,
+        jogos,
+        vitorias: vit,
+        empates: emp,
+        derrotas: der,
+        participacoes: torcida,
+        melhorEmCampo: motm,
+        presencas,
+        aproveitamentoPresenca: partidasRealizadas > 0 ? (presencas / partidasRealizadas) * 100 : 0,
+        aproveitamentoVitoria: jogos > 0 ? (vit / jogos) * 100 : 0,
+        posicaoTabela: 0,
+        variacao: 0,
+      };
+    });
+    // Ordena por pontos; empate mantem a ordem original (id = ranking da planilha).
+    linhas.sort((a, b) => b.pontos - a.pontos || a.playerId - b.playerId);
+    linhas.forEach((l, i) => (l.posicaoTabela = i + 1));
+    return linhas;
+  };
+
+  const linhas = acumular();
+
+  // Variacao = posicao antes da ultima partida menos a posicao agora (+ subiu, - caiu).
+  if (ultimoNumero > 0) {
+    const antes = acumular(ultimoNumero);
+    const posAntes = new Map(antes.map((l) => [l.playerId, l.posicaoTabela]));
+    for (const l of linhas) {
+      const anterior = posAntes.get(l.playerId);
+      l.variacao = anterior != null ? anterior - l.posicaoTabela : 0;
     }
-
-    const presencas = jogos + torcida;
-    return {
-      playerId: p.id,
-      nome: p.name,
-      apelido: p.nickname,
-      posicao: p.position as Posicao,
-      foto: p.photoUrl,
-      overall: p.overall,
-      pontos: pts,
-      jogos,
-      vitorias: vit,
-      empates: emp,
-      derrotas: der,
-      participacoes: torcida,
-      melhorEmCampo: motm,
-      presencas,
-      aproveitamentoPresenca: partidasRealizadas > 0 ? (presencas / partidasRealizadas) * 100 : 0,
-      aproveitamentoVitoria: jogos > 0 ? (vit / jogos) * 100 : 0,
-      posicaoTabela: 0,
-      variacao: 0,
-    };
-  });
-
-  // Ordena por pontos; empate mantem a ordem original (id = ranking da planilha).
-  linhas.sort((a, b) => b.pontos - a.pontos || a.playerId - b.playerId);
-  linhas.forEach((l, i) => (l.posicaoTabela = i + 1));
+  }
 
   const melhorGoleiro = linhas.find((l) => l.posicao === "GOLEIRO") ?? null;
   const maisPresencas =

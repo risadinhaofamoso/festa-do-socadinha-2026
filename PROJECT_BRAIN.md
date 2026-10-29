@@ -130,6 +130,11 @@ validados por Zod. É a mesma pegadinha do projeto antigo.
 - **Melhor do Ano** = 1º colocado. **Melhor Goleiro** = goleiro melhor colocado.
   **Mais Presente** = maior nº de presenças. **G6** = os 6 primeiros (ganham premiação), realçados
   com fundo dourado na tabela.
+- **Coluna Variação (↑↓):** seta verde/vermelha com quantas posições o jogador subiu/caiu desde a
+  **última partida finalizada**. Calculada em `lib/tabela.ts` recomputando a tabela "de antes"
+  (ignorando a última partida) e comparando as colocações. Sem partidas no site, mostra "–".
+- No **celular** a tabela mostra só `#`, variação, jogador, `Pts`, `V`, `D` (o resto aparece no
+  desktop); o layout vira coluna com o cabeçalho no topo (`body` é `flex-col md:flex-row`).
 
 ---
 
@@ -210,8 +215,11 @@ verificadores do CPF. A unicidade (um voto por CPF por time) é garantida pelo b
 📋 **Atributos das cartas são genéricos** (pedido do usuário: "faça genérico e depois a gente
 arruma"). Ajuste fino pelo cadastro quando quiser.
 
+✅ **Verificado a olho nu** (Playwright, 2026-10-29): tabela, destaques, cartinhas, modal de
+atributos, geração de times com campo, cadastro e mobile — todas as telas conferidas por
+screenshot. Variação (↑↓) validada criando uma partida de teste e vendo as setas subirem/caírem.
+
 💡 **Ideias/próximos passos sugeridos (nenhum pedido ainda):**
-- Variação de posição (↑/↓ na coluna "Variação") comparando com a tabela da semana anterior.
 - Artilharia/assistências por partida (hoje só placar por time).
 - Página pública da tabela sem login para os jogadores verem de casa.
 - QR code na votação para abrir no celular na hora.
@@ -225,6 +233,7 @@ arruma"). Ajuste fino pelo cadastro quando quiser.
 | Data | O que mudou |
 |---|---|
 | 2026-10-29 | Branch transformada no **site do futebol de quarta**: schema (Player/Match/Participation/Vote), seed dos 47 jogadores, tabela geral + destaques, cartinhas FIFA, geração de times com campo, ciclo de partida com cronômetro, votação de melhor em campo por CPF, cadastro de jogadores com foto. Páginas da festa removidas nesta branch (seguem em `main`). |
+| 2026-10-29 | QA visual por screenshot (Playwright). Correções/melhorias: layout mobile (cabeçalho no topo, `flex-col md:flex-row`), tabela enxuta no celular, e **coluna Variação (↑↓)** desde a última partida. |
 
 ---
 
