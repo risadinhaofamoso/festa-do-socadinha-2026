@@ -358,7 +358,7 @@ export function TabelaGeral({
         </h2>
         {partidas.length === 0 ? (
           <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-            Nenhuma partida lançada no site ainda. As {35} anteriores já estão consolidadas na tabela acima.
+            Nenhuma partida lançada no site ainda. As {partidasRealizadas} anteriores já estão consolidadas na tabela acima.
           </div>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

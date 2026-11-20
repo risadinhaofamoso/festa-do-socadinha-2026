@@ -38,8 +38,8 @@ export type PapelPartida = (typeof PAPEIS)[number];
 export const PE_PREFERIDO = ["D", "E"] as const;
 export type PePreferido = (typeof PE_PREFERIDO)[number];
 
-/** Partidas ja realizadas antes do site existir (planilha ate a 35a partida). */
-export const PARTIDAS_BASE = 35;
+/** Partidas ja realizadas antes do site existir (planilha ate a 39a partida). */
+export const PARTIDAS_BASE = 39;
 
 /** Regras de pontuacao da pelada. */
 export const PONTOS = {

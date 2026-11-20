@@ -40,7 +40,7 @@ A pontuação de cada jogador no ano é:
 
 Fórmula: `pontos = 3·vitórias + 1·empates + 2·(jogos + participações torcida) + 1·(melhor em campo)`.
 
-> ✅ Essa fórmula foi **validada contra a planilha oficial da 35ª partida** e reproduz os pontos
+> ✅ Essa fórmula foi **validada contra a planilha oficial da 39ª partida** e reproduz os pontos
 > exatos de todos os jogadores (ex: Caio Couto 120, Allan Minossi 119, Gabriel Aguilera 115).
 
 **Colunas da tabela** (iguais à planilha):
@@ -52,8 +52,8 @@ Fórmula: `pontos = 3·vitórias + 1·empates + 2·(jogos + participações torc
 
 ## 3. O "carry-over" histórico (decisão central D-01)
 
-A planilha tem 35 partidas de histórico que o site **não** tem como dado de partida. Em vez de
-inventar 35 partidas, cada jogador carrega o **estado consolidado na 35ª partida** em campos `base*`:
+A planilha tem 39 partidas de histórico que o site **não** tem como dado de partida. Em vez de
+inventar 39 partidas, cada jogador carrega o **estado consolidado na 39ª partida** em campos `base*`:
 
 ```
 baseWins, baseDraws, baseLosses, baseJogos, baseParticipacoes, baseMelhorEmCampo, basePoints
@@ -62,7 +62,7 @@ baseWins, baseDraws, baseLosses, baseJogos, baseParticipacoes, baseMelhorEmCampo
 - `basePoints` guarda a **pontuação exibida na planilha** (usada direto, para reproduzir até as
   quirks da planilha, como o Lipe com 3 jogos e 0 V/E/D).
 - As partidas **lançadas no site** (status `FINALIZADA`) somam **por cima** do carry-over.
-- `PARTIDAS_BASE = 35` (em `lib/types.ts`) é o denominador base de presença; cada partida finalizada
+- `PARTIDAS_BASE = 39` (em `lib/types.ts`) é o denominador base de presença; cada partida finalizada
   no site incrementa esse total.
 
 Ou seja: a tabela = `base` + `Σ(partidas finalizadas no site)`. Nunca recalcule o `base` a partir das
@@ -185,7 +185,7 @@ Computado em `lib/tabela.ts → resultadosUltimaPartida()`.
 
 ## 9. Decisões técnicas registradas
 
-**D-01 — Carry-over histórico em vez de importar 35 partidas.** Ver seção 3. Reproduz a planilha
+**D-01 — Carry-over histórico em vez de importar 39 partidas.** Ver seção 3. Reproduz a planilha
 exatamente e deixa o site continuar somando a partir da 36ª.
 
 **D-02 — Atributos das cartas são genéricos, derivados da colocação.** `lib/jogadores.ts`
@@ -235,7 +235,7 @@ verificadores do CPF. A unicidade (um voto por CPF por time) é garantida pelo b
 ## 10. Estado atual
 
 ✅ **Concluído e testado:**
-- Schema, migração `init_futebol` e seed com os **47 jogadores** no estado da 35ª partida.
+- Schema, migração `init_futebol` e seed com os **47 jogadores** no estado da 39ª partida.
 - Tabela geral reproduz a planilha **exatamente** (validado por script: TOP 6 e totais conferem).
 - Todas as 7 páginas implementadas; `npm run build` passa limpo (11 rotas) e todas respondem 200.
 - Fluxo ponta a ponta validado por simulação: criar → finalizar → votar (constraint de CPF

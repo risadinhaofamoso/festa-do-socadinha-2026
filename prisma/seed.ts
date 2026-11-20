@@ -5,7 +5,7 @@ import type { Posicao } from "../lib/types";
 const prisma = new PrismaClient();
 
 /**
- * Estado consolidado na 35a partida, transcrito da planilha oficial.
+ * Estado consolidado na 39a partida, transcrito da planilha oficial.
  * Ordem = colocacao na tabela. Pts = pontuacao exibida (vira basePoints).
  *   nome, apelido?, jogos, V, E, D, participacao(torcida), melhorEmCampo, pts, goleiro?
  */
@@ -23,37 +23,38 @@ type Entrada = {
 };
 
 const JOGADORES: Entrada[] = [
-  { nome: "Caio Couto", j: 34, v: 14, e: 7, d: 13, p: 0, m: 3, pts: 120 },
-  { nome: "Allan Minossi", j: 29, v: 16, e: 6, d: 7, p: 1, m: 5, pts: 119 },
-  { nome: "Gabriel Aguilera", j: 31, v: 13, e: 7, d: 11, p: 3, m: 1, pts: 115 },
-  { nome: "Canela", j: 33, v: 13, e: 6, d: 14, p: 1, m: 1, pts: 114 },
-  { nome: "Bruno Toffoli", j: 33, v: 11, e: 7, d: 15, p: 0, m: 1, pts: 107 },
-  { nome: "Matheus Castilho", j: 28, v: 13, e: 5, d: 10, p: 1, m: 0, pts: 102 },
-  { nome: "Matheus Hasse", j: 27, v: 11, e: 5, d: 11, p: 2, m: 1, pts: 97 },
-  { nome: "Everton Hommer", j: 26, v: 10, e: 5, d: 11, p: 0, m: 1, pts: 88 },
-  { nome: "Rafael", j: 22, v: 12, e: 4, d: 6, p: 1, m: 1, pts: 87 },
-  { nome: "Matheus Kern", j: 22, v: 7, e: 4, d: 11, p: 5, m: 0, pts: 79 },
-  { nome: "Cavani", j: 21, v: 8, e: 5, d: 8, p: 4, m: 0, pts: 79 },
-  { nome: "Claitinho", j: 18, v: 9, e: 4, d: 5, p: 3, m: 5, pts: 78 },
-  { nome: "Matheus Angellos", j: 18, v: 9, e: 4, d: 5, p: 0, m: 1, pts: 68 },
-  { nome: "Dudu", j: 19, v: 7, e: 3, d: 9, p: 0, m: 0, pts: 63 },
-  { nome: "Guilherme Coletto", j: 14, v: 4, e: 2, d: 8, p: 9, m: 1, pts: 61 },
+  { nome: "Allan Minossi", j: 33, v: 18, e: 7, d: 8, p: 1, m: 5, pts: 134 },
+  { nome: "Caio Couto", j: 37, v: 15, e: 8, d: 14, p: 0, m: 3, pts: 130 },
+  { nome: "Canela", j: 37, v: 15, e: 7, d: 15, p: 1, m: 1, pts: 129 },
+  { nome: "Gabriel Aguilera", j: 35, v: 14, e: 8, d: 13, p: 3, m: 1, pts: 127 },
+  { nome: "Bruno Toffoli", j: 35, v: 12, e: 8, d: 15, p: 0, m: 1, pts: 115 },
+  { nome: "Matheus Castilho", j: 31, v: 14, e: 6, d: 11, p: 1, m: 0, pts: 112 },
+  { nome: "Matheus Hasse", j: 30, v: 11, e: 6, d: 13, p: 3, m: 1, pts: 106 },
+  { nome: "Everton Hommer", j: 30, v: 12, e: 6, d: 12, p: 0, m: 1, pts: 103 },
+  { nome: "Rafael", j: 25, v: 14, e: 5, d: 6, p: 1, m: 1, pts: 100 },
+  { nome: "Cavani", j: 25, v: 10, e: 6, d: 9, p: 4, m: 0, pts: 94 },
+  { nome: "Claitinho", j: 22, v: 10, e: 5, d: 7, p: 3, m: 6, pts: 91 },
+  { nome: "Matheus Kern", j: 25, v: 8, e: 4, d: 13, p: 6, m: 0, pts: 90 },
+  { nome: "Dudu", j: 22, v: 9, e: 4, d: 9, p: 0, m: 1, pts: 76 },
+  { nome: "Guilherme Coletto", j: 17, v: 5, e: 2, d: 10, p: 9, m: 1, pts: 70 },
+  { nome: "Matheus Angellos", j: 19, v: 9, e: 4, d: 6, p: 0, m: 1, pts: 70 },
+  { nome: "Léo Cunha", j: 16, v: 6, e: 5, d: 5, p: 2, m: 1, pts: 60, goleiro: true },
   { nome: "Naum", j: 9, v: 3, e: 2, d: 4, p: 14, m: 1, pts: 58 },
-  { nome: "Odilon", j: 16, v: 6, e: 4, d: 6, p: 0, m: 1, pts: 55 },
-  { nome: "Rodrigo Toffoli", j: 15, v: 4, e: 5, d: 6, p: 1, m: 0, pts: 49 },
-  { nome: "Lucas Castagna", j: 10, v: 3, e: 2, d: 5, p: 6, m: 2, pts: 45 },
-  { nome: "Léo Cunha", j: 13, v: 4, e: 4, d: 5, p: 1, m: 1, pts: 45, goleiro: true },
-  { nome: "José Otávio", j: 11, v: 6, e: 1, d: 4, p: 0, m: 2, pts: 43, goleiro: true },
-  { nome: "Lucca", j: 11, v: 6, e: 2, d: 3, p: 0, m: 0, pts: 42 },
+  { nome: "Lucas Castagna", j: 13, v: 5, e: 2, d: 6, p: 6, m: 3, pts: 58 },
+  { nome: "Odilon", j: 16, v: 6, e: 4, d: 6, p: 1, m: 1, pts: 57 },
+  { nome: "José Otávio", j: 15, v: 7, e: 2, d: 6, p: 0, m: 2, pts: 55, goleiro: true },
+  { nome: "Rodrigo Toffoli", j: 16, v: 4, e: 6, d: 6, p: 1, m: 0, pts: 52 },
+  { nome: "Lucca", j: 12, v: 6, e: 3, d: 3, p: 0, m: 1, pts: 46 },
   { nome: "Alemão", j: 11, v: 3, e: 4, d: 4, p: 2, m: 1, pts: 40, goleiro: true },
+  { nome: "Leandro Luz", apelido: "Porco", j: 10, v: 2, e: 2, d: 6, p: 4, m: 0, pts: 36, goleiro: true },
+  { nome: "Diego", j: 10, v: 4, e: 2, d: 4, p: 0, m: 2, pts: 36 },
   { nome: "Giuliano Leal", j: 11, v: 3, e: 2, d: 6, p: 0, m: 0, pts: 33 },
-  { nome: "Leandro Luz", apelido: "Porco", j: 10, v: 2, e: 2, d: 6, p: 2, m: 0, pts: 32, goleiro: true },
   { nome: "Gianluca", j: 8, v: 4, e: 2, d: 2, p: 0, m: 0, pts: 30 },
-  { nome: "Eduardo", apelido: "Duca", j: 8, v: 2, e: 2, d: 3, p: 0, m: 2, pts: 29, goleiro: true },
-  { nome: "Diego", j: 7, v: 3, e: 1, d: 3, p: 0, m: 1, pts: 25 },
-  { nome: "Dodo", j: 8, v: 1, e: 4, d: 3, p: 0, m: 0, pts: 23 },
+  { nome: "Eduardo", apelido: "Duca", j: 8, v: 3, e: 2, d: 3, p: 0, m: 2, pts: 29, goleiro: true },
+  { nome: "Dodo", j: 9, v: 1, e: 4, d: 4, p: 0, m: 0, pts: 25 },
   { nome: "Jonathan", apelido: "Jaja", j: 5, v: 2, e: 2, d: 1, p: 1, m: 0, pts: 20 },
   { nome: "Guilherme", j: 6, v: 2, e: 0, d: 4, p: 0, m: 0, pts: 18 },
+  { nome: "Mãezinha", j: 6, v: 1, e: 1, d: 4, p: 0, m: 1, pts: 17 },
   { nome: "Jonathan Rodrigues", apelido: "Jow", j: 4, v: 3, e: 0, d: 1, p: 0, m: 0, pts: 17 },
   { nome: "Lopes", j: 4, v: 3, e: 0, d: 1, p: 0, m: 0, pts: 17 },
   { nome: "Augusto Fraga", j: 5, v: 1, e: 1, d: 3, p: 1, m: 0, pts: 16 },
@@ -61,7 +62,6 @@ const JOGADORES: Entrada[] = [
   { nome: "Gabriel", j: 5, v: 1, e: 2, d: 2, p: 0, m: 0, pts: 15 },
   { nome: "João Victor", apelido: "JV", j: 3, v: 1, e: 1, d: 1, p: 0, m: 1, pts: 11, goleiro: true },
   { nome: "Raul Kober", j: 3, v: 1, e: 1, d: 1, p: 0, m: 0, pts: 10 },
-  { nome: "Mãezinha", j: 3, v: 1, e: 0, d: 2, p: 0, m: 1, pts: 10 },
   { nome: "Marlon", j: 2, v: 2, e: 0, d: 0, p: 0, m: 0, pts: 10 },
   { nome: "Vini", j: 3, v: 0, e: 1, d: 2, p: 0, m: 0, pts: 7 },
   { nome: "João Pedro", j: 2, v: 1, e: 0, d: 1, p: 0, m: 0, pts: 7, goleiro: true },
@@ -124,7 +124,7 @@ async function main() {
     });
   }
 
-  console.log(`Seed concluida: ${total} jogadores cadastrados (estado da 35a partida).`);
+  console.log(`Seed concluida: ${total} jogadores cadastrados (estado da 39a partida).`);
 }
 
 main()
