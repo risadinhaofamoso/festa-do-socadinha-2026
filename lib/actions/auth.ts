@@ -1,31 +1,35 @@
 "use server";
 
 import { cookies } from "next/headers";
-import {
-  COOKIE_SESSAO,
-  DURACAO_SESSAO_SEGUNDOS,
-  comparaSeguro,
-  configAcesso,
-  gerarTokenSessao,
-} from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { COOKIE_SESSAO, DURACAO_SESSAO_SEGUNDOS, assinarSessao } from "@/lib/auth";
+import { conferirSenha } from "@/lib/senha";
 import type { ActionResult } from "@/lib/action-result";
 
-export async function entrar(senha: string): Promise<ActionResult> {
-  const acesso = configAcesso();
-  if (!acesso.protegido) {
-    return { success: true, data: undefined };
+/** Login de gestão: confere e-mail + senha contra a tabela de admins. */
+export async function entrar(email: string, senha: string): Promise<ActionResult> {
+  const mail = (email ?? "").trim().toLowerCase();
+  const pass = senha ?? "";
+  if (!mail || !pass) return { success: false, error: "Informe e-mail e senha." };
+
+  const admin = await prisma.admin.findUnique({ where: { email: mail } });
+  // Confere a senha mesmo quando o e-mail não existe, para não revelar
+  // (pelo tempo de resposta) se um e-mail está ou não cadastrado.
+  const senhaOk = admin
+    ? await conferirSenha(pass, admin.passwordHash)
+    : await conferirSenha(pass, "scrypt$00$00");
+
+  if (!admin || !senhaOk) {
+    return { success: false, error: "E-mail ou senha incorretos." };
   }
 
-  const informada = senha.trim();
-  if (!informada) {
-    return { success: false, error: "Digite a senha." };
-  }
+  const token = await assinarSessao({
+    sub: admin.id,
+    email: admin.email,
+    nome: admin.name,
+    iat: Math.floor(Date.now() / 1000),
+  });
 
-  if (!comparaSeguro(informada, acesso.senha)) {
-    return { success: false, error: "Senha incorreta." };
-  }
-
-  const token = await gerarTokenSessao(acesso.senha, acesso.segredo);
   cookies().set(COOKIE_SESSAO, token, {
     httpOnly: true,
     sameSite: "lax",
@@ -40,9 +44,4 @@ export async function entrar(senha: string): Promise<ActionResult> {
 export async function sair(): Promise<ActionResult> {
   cookies().delete(COOKIE_SESSAO);
   return { success: true, data: undefined };
-}
-
-/** Usado pela barra lateral para só mostrar o botão "Sair" quando faz sentido. */
-export async function siteProtegido() {
-  return configAcesso().protegido;
 }

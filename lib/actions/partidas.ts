@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { PARTIDAS_BASE } from "@/lib/types";
 import { criarComTimesSchema, definirTimesSchema, resultadoSchema } from "@/lib/validations";
+import { bloqueioAdmin } from "@/lib/sessao";
 import type { ActionResult } from "@/lib/action-result";
 
 export async function listarPartidas() {
@@ -54,6 +55,9 @@ function montarParticipacoes(timeA: number[], timeB: number[], torcida: number[]
 }
 
 export async function criarPartida(raw: unknown): Promise<ActionResult<{ id: number; number: number }>> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const parsed = criarComTimesSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? "Dados invalidos." };
@@ -78,6 +82,9 @@ export async function criarPartida(raw: unknown): Promise<ActionResult<{ id: num
 
 /** Reajusta os times de uma partida ainda nao finalizada. */
 export async function definirTimes(raw: unknown): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const parsed = definirTimesSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? "Dados invalidos." };
@@ -102,6 +109,9 @@ export async function definirTimes(raw: unknown): Promise<ActionResult> {
 }
 
 export async function iniciarPartida(matchId: number): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const partida = await prisma.match.findUnique({ where: { id: matchId } });
   if (!partida) return { success: false, error: "Partida nao encontrada." };
   if (partida.status === "FINALIZADA") {
@@ -117,6 +127,9 @@ export async function iniciarPartida(matchId: number): Promise<ActionResult> {
 }
 
 export async function confirmarResultado(raw: unknown): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const parsed = resultadoSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? "Dados invalidos." };
@@ -146,6 +159,9 @@ export async function confirmarResultado(raw: unknown): Promise<ActionResult> {
 }
 
 export async function definirVotacao(matchId: number, aberta: boolean): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const partida = await prisma.match.findUnique({ where: { id: matchId } });
   if (!partida) return { success: false, error: "Partida nao encontrada." };
   if (partida.status !== "FINALIZADA") {
@@ -159,6 +175,9 @@ export async function definirVotacao(matchId: number, aberta: boolean): Promise<
 }
 
 export async function excluirPartida(matchId: number): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   await prisma.match.delete({ where: { id: matchId } });
   revalidatePath("/partidas");
   revalidatePath("/");

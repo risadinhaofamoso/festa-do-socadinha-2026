@@ -35,6 +35,12 @@ export default async function JogadoresPage() {
       empates: l?.empates ?? 0,
       derrotas: l?.derrotas ?? 0,
       melhorEmCampo: l?.melhorEmCampo ?? 0,
+      presencas: l?.presencas ?? 0,
+      aproveitamentoPresenca: l?.aproveitamentoPresenca ?? 0,
+      aproveitamentoVitoria: l?.aproveitamentoVitoria ?? 0,
+      mediaPontos: l?.mediaPontos ?? 0,
+      saldo: l?.saldo ?? 0,
+      forma: l?.forma ?? [],
     };
   });
 

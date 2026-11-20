@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { jogadorSchema } from "@/lib/validations";
+import { bloqueioAdmin } from "@/lib/sessao";
 import type { ActionResult } from "@/lib/action-result";
 
 export async function listarJogadores() {
@@ -43,6 +44,9 @@ function normalizar(raw: unknown) {
 }
 
 export async function criarJogador(raw: unknown): Promise<ActionResult<{ id: number }>> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const r = normalizar(raw);
   if (!r.ok) return { success: false, error: r.error };
 
@@ -54,6 +58,9 @@ export async function criarJogador(raw: unknown): Promise<ActionResult<{ id: num
 }
 
 export async function atualizarJogador(id: number, raw: unknown): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const r = normalizar(raw);
   if (!r.ok) return { success: false, error: r.error };
 
@@ -68,6 +75,9 @@ export async function atualizarJogador(id: number, raw: unknown): Promise<Action
 }
 
 export async function alternarAtivo(id: number): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const jogador = await prisma.player.findUnique({ where: { id } });
   if (!jogador) return { success: false, error: "Jogador nao encontrado." };
   await prisma.player.update({ where: { id }, data: { active: !jogador.active } });
@@ -77,6 +87,9 @@ export async function alternarAtivo(id: number): Promise<ActionResult> {
 }
 
 export async function removerJogador(id: number): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const participou = await prisma.participation.count({ where: { playerId: id } });
   if (participou > 0) {
     return {

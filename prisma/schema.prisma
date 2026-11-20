@@ -108,6 +108,20 @@ model Participation {
   @@map("participations")
 }
 
+/// Administrador (login de gestão). Qualquer um vê o site; só quem tem um
+/// login aqui consegue editar (cadastrar jogador, lançar partida, apurar voto…).
+/// A senha é guardada como hash scrypt (lib/senha.ts), nunca em texto puro.
+model Admin {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("admins")
+}
+
 /// Voto de melhor em campo. Um voto por CPF por time, por partida.
 /// A votacao abre por time: so o time vencedor (ou os dois, em caso de empate).
 model Vote {

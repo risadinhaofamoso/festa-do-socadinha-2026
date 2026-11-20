@@ -41,8 +41,13 @@ export function VotacaoClient({ partidas }: { partidas: PartidaVoto[] }) {
   if (partidas.length === 0) {
     return (
       <div className="space-y-5">
-        <h1 className="text-2xl md:text-3xl font-black texto-neon">Votação</h1>
-        <div className="rounded-xl border border-dashed p-10 text-center">
+        <div>
+          <p className="font-display uppercase tracking-[0.2em] text-[var(--neon-green)] text-xs font-bold">
+            Craque da partida
+          </p>
+          <h1 className="titulo-fc text-4xl sm:text-5xl mt-1">Votação</h1>
+        </div>
+        <div className="rounded-2xl border border-dashed p-10 text-center">
           <Vote className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
           <p className="font-medium">Nenhuma votação aberta no momento.</p>
           <p className="text-sm text-muted-foreground mt-1">
@@ -80,8 +85,11 @@ export function VotacaoClient({ partidas }: { partidas: PartidaVoto[] }) {
     <div className="space-y-6">
       <Confete ativo={confete} onFim={() => setConfete(false)} />
       <div>
-        <h1 className="text-2xl md:text-3xl font-black texto-neon">Votação · Melhor em campo</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="font-display uppercase tracking-[0.2em] text-[var(--neon-green)] text-xs font-bold">
+          Craque da partida
+        </p>
+        <h1 className="titulo-fc text-4xl sm:text-5xl mt-1">Votação</h1>
+        <p className="text-sm text-muted-foreground mt-2">
           Clique no jogador que você achou o melhor. Cada CPF vota uma vez por time.
         </p>
       </div>

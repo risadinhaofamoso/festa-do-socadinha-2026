@@ -13,6 +13,7 @@ import {
   Vote,
   CheckCircle2,
   ExternalLink,
+  Clock,
 } from "lucide-react";
 import { Avatar } from "@/components/jogadores/avatar";
 import { CampoTimes } from "@/components/campo/campo-times";
@@ -77,6 +78,7 @@ export type PartidaDetalheProps = {
   pontosDoDia: PontoDia[];
   resumoVotos: ResumoTime[];
   habilitadosVotacao: Time[];
+  isAdmin: boolean;
 };
 
 function Cronometro({ startedAt }: { startedAt: string | null }) {
@@ -90,14 +92,14 @@ function Cronometro({ startedAt }: { startedAt: string | null }) {
     return () => clearInterval(id);
   }, [startedAt]);
   return (
-    <span className="font-mono text-3xl font-black tabular-nums texto-neon">
+    <span className="font-mono text-4xl font-black tabular-nums texto-neon">
       {formatarCronometro(segundos)}
     </span>
   );
 }
 
 export function PartidaDetalhe(props: PartidaDetalheProps) {
-  const { partida } = props;
+  const { partida, isAdmin } = props;
   const router = useRouter();
   const [agindo, start] = useTransition();
   const [scoreA, setScoreA] = useState<string>(String(partida.scoreA ?? 0));
@@ -130,7 +132,7 @@ export function PartidaDetalhe(props: PartidaDetalheProps) {
       });
       if (r.success) {
         setConfete(true);
-        toast.success("Resultado confirmado! Votação do melhor em campo aberta.");
+        toast.success("Resultado confirmado! Votação do craque aberta.");
         router.refresh();
       } else toast.error(r.error);
     });
@@ -140,7 +142,7 @@ export function PartidaDetalhe(props: PartidaDetalheProps) {
     start(async () => {
       const r = await encerrarVotacao(partida.id);
       if (r.success) {
-        toast.success("Votação apurada! Melhor em campo definido.");
+        toast.success("Votação apurada! Craque da partida definido.");
         router.refresh();
       } else toast.error(r.error);
     });
@@ -167,52 +169,56 @@ export function PartidaDetalhe(props: PartidaDetalheProps) {
       {/* Cabeçalho */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link href="/partidas" className="text-xs text-muted-foreground hover:underline">
+          <Link href="/partidas" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
             ← Todas as partidas
           </Link>
-          <h1 className="text-2xl md:text-3xl font-black texto-neon">{partida.number}ª partida</h1>
-          <p className="text-sm text-muted-foreground">{formatarData(partida.data)}</p>
+          <h1 className="titulo-fc text-3xl md:text-4xl">{partida.number}ª partida</h1>
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" /> {formatarData(partida.data)}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {partida.status === "CRIADA" && <Badge variant="secondary">Agendada</Badge>}
-          {emAndamento && <Badge className="bg-[var(--neon-green)] text-black">Em andamento</Badge>}
+          {emAndamento && <Badge className="bg-[var(--neon-green)] text-black">Ao vivo</Badge>}
           {finalizada && <Badge variant="success">Finalizada</Badge>}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Excluir esta partida?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Isso apaga o resultado, as participações e os votos. A pontuação dos jogadores
-                  volta a desconsiderar esta partida. Não dá para desfazer.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={excluir}>Excluir</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {isAdmin && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir esta partida?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Isso apaga o resultado, as participações e os votos. A pontuação dos jogadores
+                    volta a desconsiderar esta partida. Não dá para desfazer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={excluir}>Excluir</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 
       {/* Placar / cronômetro */}
-      <Card>
-        <CardContent className="p-5">
+      <Card className="hero-estadio border-border overflow-hidden">
+        <CardContent className="p-6">
           {finalizada ? (
-            <div className="flex items-center justify-center gap-6 text-center">
+            <div className="flex items-center justify-center gap-8 text-center">
               <div>
-                <p className="text-xs font-bold text-[var(--neon-gold)] uppercase">Time A</p>
-                <p className="text-5xl font-black tabular-nums">{partida.scoreA}</p>
+                <p className="text-xs font-bold text-[var(--neon-gold)] uppercase tracking-wider font-display">Time A</p>
+                <p className="text-6xl font-black tabular-nums font-display">{partida.scoreA}</p>
               </div>
-              <span className="text-2xl text-muted-foreground">×</span>
+              <span className="text-3xl text-muted-foreground">×</span>
               <div>
-                <p className="text-xs font-bold text-[var(--neon-blue)] uppercase">Time B</p>
-                <p className="text-5xl font-black tabular-nums">{partida.scoreB}</p>
+                <p className="text-xs font-bold text-[var(--neon-blue)] uppercase tracking-wider font-display">Time B</p>
+                <p className="text-6xl font-black tabular-nums font-display">{partida.scoreB}</p>
               </div>
             </div>
           ) : emAndamento ? (
@@ -221,41 +227,51 @@ export function PartidaDetalhe(props: PartidaDetalheProps) {
                 <Timer className="h-5 w-5" />
                 <Cronometro startedAt={partida.startedAt} />
               </div>
-              <div className="flex items-center justify-center gap-3">
-                <div className="text-center">
-                  <p className="text-xs font-bold text-[var(--neon-gold)]">TIME A</p>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={scoreA}
-                    onChange={(e) => setScoreA(e.target.value)}
-                    className="w-16 text-center text-2xl font-black h-14"
-                  />
-                </div>
-                <span className="text-xl text-muted-foreground pt-5">×</span>
-                <div className="text-center">
-                  <p className="text-xs font-bold text-[var(--neon-blue)]">TIME B</p>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={scoreB}
-                    onChange={(e) => setScoreB(e.target.value)}
-                    className="w-16 text-center text-2xl font-black h-14"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-center">
-                <Button onClick={confirmar} disabled={agindo} size="lg" className="gap-2">
-                  <Flag className="h-4 w-4" /> Confirmar resultado
-                </Button>
-              </div>
+              {isAdmin ? (
+                <>
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="text-center">
+                      <p className="text-xs font-bold text-[var(--neon-gold)] font-display">TIME A</p>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={scoreA}
+                        onChange={(e) => setScoreA(e.target.value)}
+                        className="w-16 text-center text-2xl font-black h-14"
+                      />
+                    </div>
+                    <span className="text-xl text-muted-foreground pt-5">×</span>
+                    <div className="text-center">
+                      <p className="text-xs font-bold text-[var(--neon-blue)] font-display">TIME B</p>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={scoreB}
+                        onChange={(e) => setScoreB(e.target.value)}
+                        className="w-16 text-center text-2xl font-black h-14"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-center">
+                    <Button onClick={confirmar} disabled={agindo} size="lg" className="gap-2 font-bold">
+                      <Flag className="h-4 w-4" /> Confirmar resultado
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-center text-muted-foreground text-sm">Partida em andamento. Aguardando o resultado.</p>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <p className="text-muted-foreground text-sm">Times definidos. Quando a bola rolar, inicie a partida.</p>
-              <Button onClick={iniciar} disabled={agindo} size="lg" className="gap-2">
-                <Play className="h-4 w-4" /> Iniciar partida
-              </Button>
+              <p className="text-muted-foreground text-sm">
+                {isAdmin ? "Times definidos. Quando a bola rolar, inicie a partida." : "Times definidos. Aguardando a gestão iniciar."}
+              </p>
+              {isAdmin && (
+                <Button onClick={iniciar} disabled={agindo} size="lg" className="gap-2 font-bold">
+                  <Play className="h-4 w-4" /> Iniciar partida
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
@@ -263,11 +279,11 @@ export function PartidaDetalhe(props: PartidaDetalheProps) {
 
       {/* Votação */}
       {finalizada && (
-        <Card className="border-[var(--neon-gold)]/40">
+        <Card className="painel-destaque border-[var(--neon-gold)]/40" style={{ ["--cor-faixa" as string]: "var(--neon-gold)" }}>
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <h2 className="font-bold flex items-center gap-2">
-                <Vote className="h-5 w-5 text-[var(--neon-gold)]" /> Melhor em campo
+              <h2 className="font-bold flex items-center gap-2 font-display text-lg uppercase tracking-wide">
+                <Vote className="h-5 w-5 text-[var(--neon-gold)]" /> Craque da partida
               </h2>
               {partida.votingOpen ? (
                 <div className="flex items-center gap-2">
@@ -276,9 +292,11 @@ export function PartidaDetalhe(props: PartidaDetalheProps) {
                       <ExternalLink className="h-3.5 w-3.5" /> Abrir votação
                     </Button>
                   </Link>
-                  <Button onClick={encerrar} disabled={agindo} size="sm" className="gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Encerrar e apurar
-                  </Button>
+                  {isAdmin && (
+                    <Button onClick={encerrar} disabled={agindo} size="sm" className="gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Encerrar e apurar
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <Badge variant="secondary">Votação encerrada</Badge>
@@ -287,7 +305,7 @@ export function PartidaDetalhe(props: PartidaDetalheProps) {
 
             {partida.votingOpen && (
               <p className="text-xs text-muted-foreground">
-                A votação está aberta na aba <b>Votação</b>. Cada pessoa vota uma vez por CPF.
+                A votação está aberta na aba <b>Votar</b>. Cada pessoa vota uma vez por CPF.
                 {props.habilitadosVotacao.length === 2
                   ? " Empate: vota-se no melhor de cada time."
                   : ` Só o time vencedor (Time ${props.habilitadosVotacao[0]}) escolhe o melhor.`}
@@ -298,8 +316,8 @@ export function PartidaDetalhe(props: PartidaDetalheProps) {
               {props.resumoVotos.map((r) => {
                 const max = r.totais[0]?.votos ?? 0;
                 return (
-                  <div key={r.team} className="rounded-lg border p-3">
-                    <p className="text-sm font-bold mb-2" style={{ color: r.team === "A" ? "var(--neon-gold)" : "var(--neon-blue)" }}>
+                  <div key={r.team} className="rounded-lg border p-3 bg-background/40">
+                    <p className="text-sm font-bold mb-2 font-display uppercase tracking-wide" style={{ color: r.team === "A" ? "var(--neon-gold)" : "var(--neon-blue)" }}>
                       Time {r.team} · {r.totalVotos} voto(s)
                     </p>
                     {r.totais.length === 0 ? (
@@ -354,7 +372,7 @@ function PontosTime({ titulo, cor, pontos }: { titulo: string; cor: string; pont
   return (
     <Card>
       <CardContent className="p-3">
-        <p className="font-bold mb-2" style={{ color: cor }}>{titulo} · pontos do dia</p>
+        <p className="font-bold mb-2 font-display uppercase tracking-wide" style={{ color: cor }}>{titulo} · pontos do dia</p>
         <ul className="space-y-1">
           {pontos.map((p) => (
             <li key={p.playerId} className="flex items-center gap-2 text-sm">

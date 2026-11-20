@@ -72,12 +72,8 @@ export function CampoTimes({ timeA, timeB }: { timeA: TimeGerado; timeB: TimeGer
   return (
     <div className="space-y-3">
       <div
-        className="relative w-full max-w-md mx-auto rounded-xl overflow-hidden border-2 border-white/15"
-        style={{
-          aspectRatio: "3 / 4",
-          background:
-            "repeating-linear-gradient(180deg,#15803d 0 9%,#166534 9% 18%)",
-        }}
+        className="pitch relative w-full max-w-md mx-auto rounded-2xl overflow-hidden border-2 border-white/15 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.7)]"
+        style={{ aspectRatio: "3 / 4" }}
       >
         {/* Linhas do campo */}
         <div className="absolute inset-3 border-2 border-white/35 rounded-sm" />

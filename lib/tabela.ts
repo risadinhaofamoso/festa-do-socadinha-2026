@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import {
   PARTIDAS_BASE,
   PONTOS,
+  type FormaResultado,
   type LinhaTabela,
   type Posicao,
   type ResultadoUltimaPartida,
@@ -107,6 +108,11 @@ export async function carregarTabela(): Promise<DadosTabela> {
         aproveitamentoVitoria: jogos > 0 ? (vit / jogos) * 100 : 0,
         posicaoTabela: 0,
         variacao: 0,
+        mediaPontos: presencas > 0 ? pts / presencas : 0,
+        forma: [],
+        golsPro: 0,
+        golsContra: 0,
+        saldo: 0,
       };
     });
     // Ordena por pontos; empate mantem a ordem original (id = ranking da planilha).
@@ -124,6 +130,37 @@ export async function carregarTabela(): Promise<DadosTabela> {
     for (const l of linhas) {
       const anterior = posAntes.get(l.playerId);
       l.variacao = anterior != null ? anterior - l.posicaoTabela : 0;
+    }
+  }
+
+  // Estatísticas extras (forma e gols) a partir das partidas FINALIZADAS do site.
+  const extras = new Map<number, { forma: FormaResultado[]; golsPro: number; golsContra: number }>();
+  for (const p of players) {
+    const jogos = p.participations
+      .filter((pp) => pp.match.status === "FINALIZADA" && pp.role === "JOGADOR")
+      .sort((a, b) => b.match.number - a.match.number); // mais recente primeiro
+
+    let golsPro = 0;
+    let golsContra = 0;
+    const forma: FormaResultado[] = [];
+    for (const pp of jogos) {
+      const { scoreA, scoreB } = pp.match;
+      if (scoreA == null || scoreB == null) continue;
+      const meus = pp.team === "A" ? scoreA : scoreB;
+      const deles = pp.team === "A" ? scoreB : scoreA;
+      golsPro += meus;
+      golsContra += deles;
+      if (forma.length < 5) forma.push(meus > deles ? "V" : meus < deles ? "D" : "E");
+    }
+    extras.set(p.id, { forma, golsPro, golsContra });
+  }
+  for (const l of linhas) {
+    const e = extras.get(l.playerId);
+    if (e) {
+      l.forma = e.forma;
+      l.golsPro = e.golsPro;
+      l.golsContra = e.golsContra;
+      l.saldo = e.golsPro - e.golsContra;
     }
   }
 

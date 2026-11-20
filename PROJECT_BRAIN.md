@@ -3,7 +3,7 @@
 > Este arquivo é a **fonte de verdade** do projeto. Toda regra, decisão, preferência e mudança
 > relevante deve ser registrada aqui. Leia antes de mexer no código e atualize sempre que algo mudar.
 >
-> Última atualização: 2026-10-29
+> Última atualização: 2026-11-20
 
 > ⚠️ **Contexto de histórico:** este repositório começou como um painel de festa ("Festa do
 > Socadinha"). A branch `claude/futebol-wednesday-control-site-yikuox` o transformou num site para
@@ -76,7 +76,7 @@ colunas — some apenas os deltas das novas partidas (feito em `lib/tabela.ts`).
 |---|---|---|
 | Framework | Next.js **14.2.35** (App Router) | `next.config.mjs` (a v14 não aceita `.ts`) |
 | Linguagem | TypeScript estrito | sem `any` |
-| Estilo | Tailwind CSS v4 (`@theme inline`, sem config.js) | tema escuro/neon em `app/globals.css` |
+| Estilo | Tailwind CSS v4 (`@theme inline`, sem config.js) | tema escuro **EA FC** em `app/globals.css`; títulos em Saira Condensed |
 | Componentes | shadcn/ui escritos à mão em `components/ui/` | copiar o padrão existente, não usar a CLI |
 | Banco | SQLite via Prisma **5.22.0** (`prisma/dev.db`) | adaptador libSQL p/ Turso em produção |
 | Validação | Zod **3.23.8** | `lib/validations.ts` |
@@ -106,7 +106,15 @@ Participation (presença numa partida)   @@unique([matchId, playerId])
 
 Vote (voto de melhor em campo)          @@unique([matchId, team, voterCpf])
   team, votedPlayerId, voterCpf, voterName
+
+Admin (login de gestão)                 email @unique
+  email, name, passwordHash (scrypt "scrypt$salt$hash")
 ```
+
+A `LinhaTabela` (em `lib/tabela.ts`) além do básico calcula: `variacao` (↑↓ desde a
+última partida), `mediaPontos` (pontos ÷ presenças), `forma` (até 5 últimos V/E/D das
+partidas do site), `golsPro`/`golsContra`/`saldo` (gols do time do jogador nas partidas
+em que entrou em campo).
 
 **Enums são `String`** (SQLite não suporta enum no Prisma) — valores válidos em `lib/types.ts`,
 validados por Zod. É a mesma pegadinha do projeto antigo.
@@ -123,8 +131,15 @@ validados por Zod. É a mesma pegadinha do projeto antigo.
 | `/partidas` | Lista de partidas lançadas; botão "Nova partida" leva a `/gerar` |
 | `/partidas/[id]` | Detalhe/controle: iniciar, cronômetro, confirmar resultado, votação, pontos do dia |
 | `/votar` | **Votação pública** de melhor em campo (CPF + nome) |
-| `/usuarios` | **Cadastro/edição** de jogadores (foto, posição, atributos da carta) |
-| `/login` | Só quando `SENHA_ACESSO` está definida |
+| `/gerar` | **Gerar Times** — só gestão (não-admin é redirecionado ao login) |
+| `/usuarios` | **Cadastro/edição** de jogadores — só gestão |
+| `/login` | Login de gestão (e-mail + senha) |
+
+**Acesso (regra atual):** qualquer pessoa **vê** tudo pelo link. Para **editar**
+(cadastrar jogador, lançar/controlar partida, apurar votação) é preciso estar logado
+como **gestão/admin**. A navegação é uma **navbar no topo** (`components/navbar.tsx`),
+que só mostra as abas de gestão (Gerar Times, Cadastrar) e o botão Sair quando logado;
+caso contrário mostra "Entrar". Votar continua **público**.
 
 **Destaques da tabela:**
 - **Melhor do Ano** = 1º colocado. **Melhor Goleiro** = goleiro melhor colocado.
@@ -187,9 +202,27 @@ quebrava o build no projeto antigo.)
 
 **D-05 — Páginas de dados são `force-dynamic`.** Leem o banco a cada acesso.
 
-**D-06 — Login por senha única, só quando publicado.** Herdado do projeto da festa (`lib/auth.ts` +
-`middleware.ts`). Sem `SENHA_ACESSO`, o site abre destrancado (uso local). Com ela, exige login.
-O painel expõe nomes e (nos votos) CPFs, então **publicar sem senha não é recomendado**.
+**D-06 — Acesso público para ver, login de gestão para editar.** (Atualizado em 2026-11-20;
+substitui a antiga senha única que trancava o site inteiro, e o `middleware.ts` foi removido.)
+Qualquer um acessa e vê tudo. Para editar é preciso logar como **admin** (tabela `admins`,
+e-mail + senha com hash **scrypt** em `lib/senha.ts`). A sessão é um **cookie assinado por HMAC**
+(`lib/auth.ts`, Web Crypto — roda em Node e Edge); `lib/sessao.ts` lê a sessão e expõe
+`ehAdmin()`/`bloqueioAdmin()`. **Toda Server Action de escrita** chama `bloqueioAdmin()` no início
+(jogadores, partidas, votação de apuração); **votar continua público**. As páginas `/gerar` e
+`/usuarios` redirecionam não-admin para `/login`. `SESSION_SECRET` é **obrigatório em produção**
+(em dev há fallback inseguro). Criar admin: `node prisma/seed-admin.mjs` (ver `.env.example`).
+
+**D-09 — Redesign estilo EA SPORTS FC / Ultimate Team (2026-11-20).** Saiu do visual "festa/neon"
+e virou um site esportivo premium: **navbar no topo** (não mais sidebar — era o que dava cara de
+dashboard), fundo escuro com clima de estádio, verde "FC" como cor de destaque e **dourado só para
+cartas de ouro e líder**. Fonte de títulos **Saira Condensed** (`--font-display-saira`, classe
+`.titulo-fc`/`.font-display`). Cartas FUT autênticas em `components/carta.tsx` (ouro/prata/bronze
+por overall, stats em 2 colunas, estrelas de habilidade/perna ruim). Tema em `app/globals.css`
+(as classes antigas de salão/mesa/zona foram removidas).
+
+**D-10 — Estatísticas estendidas.** `lib/tabela.ts` calcula forma (últimos 5), média de pontos,
+gols pró/contra e saldo (ver seção 5). Aparecem na tabela (colunas SG/Méd/Forma) e no **modal de
+perfil** do jogador (tiles + barras de atributos). Continuam derivadas das partidas do site + base.
 
 **D-07 — Mesmo schema roda local (arquivo) e no Turso.** `lib/prisma.ts` escolhe pela presença de
 `TURSO_DATABASE_URL`. Ver `DEPLOY.md`.
@@ -219,6 +252,14 @@ arruma"). Ajuste fino pelo cadastro quando quiser.
 atributos, geração de times com campo, cadastro e mobile — todas as telas conferidas por
 screenshot. Variação (↑↓) validada criando uma partida de teste e vendo as setas subirem/caírem.
 
+✅ **Redesign + login verificados (Playwright, 2026-11-20):** todas as telas no visual EA FC
+(desktop e mobile), login de gestão funcionando, `/gerar` bloqueado para não-admin (redireciona),
+fluxo admin ponta a ponta (gerar → criar → iniciar → confirmar 4×2 → votação → pontos do dia) e
+tabela/variação atualizando certo. Partida de teste removida ao final (banco segue com 0 partidas).
+
+🔑 **Login inicial de gestão:** `leonardo.cunha0905@gmail.com` com senha de teste **`FutSD@2026`**
+(trocar depois). Novos admins via `prisma/seed-admin.mjs`.
+
 💡 **Ideias/próximos passos sugeridos (nenhum pedido ainda):**
 - Artilharia/assistências por partida (hoje só placar por time).
 - Página pública da tabela sem login para os jogadores verem de casa.
@@ -232,6 +273,7 @@ screenshot. Variação (↑↓) validada criando uma partida de teste e vendo as
 
 | Data | O que mudou |
 |---|---|
+| 2026-11-20 | **Login de gestão** (acesso público para ver, admin para editar): modelo `Admin`, hash scrypt, sessão por cookie HMAC, Server Actions de escrita protegidas, `/gerar` e `/usuarios` só gestão; removido o middleware de senha única. **Redesign completo estilo EA FC** (navbar no topo, hero, cartas FUT autênticas, fonte Saira Condensed). **Mais estatísticas** (forma, média, saldo, gols) na tabela e no modal de perfil. Admin seed: `prisma/seed-admin.mjs`. Build + QA visual (Playwright) de todas as telas e do fluxo admin ok. |
 | 2026-10-29 | Branch transformada no **site do futebol de quarta**: schema (Player/Match/Participation/Vote), seed dos 47 jogadores, tabela geral + destaques, cartinhas FIFA, geração de times com campo, ciclo de partida com cronômetro, votação de melhor em campo por CPF, cadastro de jogadores com foto. Páginas da festa removidas nesta branch (seguem em `main`). |
 | 2026-10-29 | QA visual por screenshot (Playwright). Correções/melhorias: layout mobile (cabeçalho no topo, `flex-col md:flex-row`), tabela enxuta no celular, e **coluna Variação (↑↓)** desde a última partida. |
 

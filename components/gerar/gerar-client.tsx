@@ -147,9 +147,12 @@ export function GerarClient({ jogadores }: { jogadores: JogadorBase[] }) {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl md:text-3xl font-black texto-neon">Gerar Times</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Marque quem veio hoje. Os times saem equilibrados pela colocação na tabela e pelas cartinhas.
+        <p className="font-display uppercase tracking-[0.2em] text-[var(--neon-green)] text-xs font-bold">
+          Gestão · Sorteio equilibrado
+        </p>
+        <h1 className="titulo-fc text-4xl sm:text-5xl mt-1">Gerar Times</h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          Marque quem veio hoje. Os times saem equilibrados pela colocação na tabela e pelas cartas.
         </p>
       </div>
 

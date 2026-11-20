@@ -3,6 +3,7 @@ import { getPartida } from "@/lib/actions/partidas";
 import { resumoVotos } from "@/lib/actions/votacao";
 import { formarTime, type JogadorTime } from "@/lib/times";
 import { pontosDaPartida, timesVencedores } from "@/lib/partidas-helpers";
+import { ehAdmin } from "@/lib/sessao";
 import { PartidaDetalhe } from "@/components/partidas/partida-detalhe";
 import type { Posicao } from "@/lib/types";
 
@@ -12,7 +13,7 @@ export default async function PartidaPage({ params }: { params: { id: string } }
   const id = Number(params.id);
   if (!Number.isFinite(id)) notFound();
 
-  const partida = await getPartida(id);
+  const [partida, isAdmin] = await Promise.all([getPartida(id), ehAdmin()]);
   if (!partida) notFound();
 
   const comoJogadorTime = (team: string): JogadorTime[] =>
@@ -81,6 +82,7 @@ export default async function PartidaPage({ params }: { params: { id: string } }
       pontosDoDia={pontosDoDia}
       resumoVotos={votos}
       habilitadosVotacao={timesVencedores(partida.scoreA, partida.scoreB)}
+      isAdmin={isAdmin}
     />
   );
 }

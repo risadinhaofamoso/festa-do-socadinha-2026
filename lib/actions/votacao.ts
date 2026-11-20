@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { votoSchema } from "@/lib/validations";
+import { bloqueioAdmin } from "@/lib/sessao";
 import type { ActionResult } from "@/lib/action-result";
 import type { Time } from "@/lib/types";
 import { timesVencedores } from "@/lib/partidas-helpers";
@@ -87,6 +88,9 @@ export async function resumoVotos(matchId: number): Promise<ResumoTime[]> {
  * habilitado (empate no voto desempata pelo maior overall) e fecha a urna.
  */
 export async function encerrarVotacao(matchId: number): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const partida = await prisma.match.findUnique({
     where: { id: matchId },
     include: { participations: { include: { player: true } } },
@@ -142,6 +146,9 @@ export async function definirMelhorEmCampo(
   team: Time,
   playerId: number | null
 ): Promise<ActionResult> {
+  const bloqueio = await bloqueioAdmin();
+  if (bloqueio) return bloqueio;
+
   const alvoTime = await prisma.participation.findMany({ where: { matchId, team } });
   const ids = alvoTime.map((p) => p.playerId);
   await prisma.participation.updateMany({

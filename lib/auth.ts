@@ -1,73 +1,104 @@
 /**
- * Proteção por senha única.
+ * Sessão de administrador (login de gestão).
  *
- * O site não tem cadastro de usuários — é uma senha só, compartilhada por quem
- * organiza a festa. Isso existe porque o painel fica exposto na internet e
- * mostra nome, telefone e situação de pagamento dos convidados.
+ * Qualquer pessoa acessa e vê o site. Para **editar** (cadastrar jogador,
+ * lançar partida, apurar votação…) é preciso estar logado com um login de
+ * gestão — os administradores do grupo.
  *
- * Como funciona: ao acertar a senha, o navegador guarda um cookie cujo valor é
- * um HMAC gerado com um segredo que só o servidor conhece. Sem o segredo não dá
- * para forjar o cookie. A senha em si nunca vai para o navegador.
+ * A sessão é um cookie assinado: `base64url(payload).HMAC`. O payload diz quem
+ * é o admin (id + e-mail) e quando a sessão começou. Sem o segredo do servidor
+ * não dá para forjar o cookie, e a senha nunca vai para o navegador.
  *
- * Usa Web Crypto (e não o `crypto` do Node) porque o middleware roda no Edge.
+ * Usa Web Crypto (não o `crypto` do Node) para funcionar tanto no runtime Node
+ * quanto no Edge.
  */
 
-export const COOKIE_SESSAO = "festa_sessao";
+export const COOKIE_SESSAO = "futsd_sessao";
 export const DURACAO_SESSAO_SEGUNDOS = 60 * 60 * 24 * 30; // 30 dias
 
-function toHex(buffer: ArrayBuffer) {
+export type SessaoPayload = {
+  sub: number; // id do admin
+  email: string;
+  nome?: string | null;
+  iat: number; // emitido em (segundos)
+};
+
+function segredo(): string {
+  const s = process.env.SESSION_SECRET?.trim();
+  // Em produção, defina SESSION_SECRET. O fallback deixa o login funcionar em
+  // desenvolvimento sem configuração.
+  return s && s.length >= 8 ? s : "futsd-dev-secret-troque-em-producao-por-favor";
+}
+
+function toHex(buffer: ArrayBuffer): string {
   return Array.from(new Uint8Array(buffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
-/**
- * Valor esperado do cookie. Depende da senha e do segredo, então trocar
- * qualquer um dos dois derruba todas as sessões abertas.
- */
-export async function gerarTokenSessao(senha: string, segredo: string) {
+function toB64url(bytes: Uint8Array): string {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function fromB64url(texto: string): Uint8Array {
+  let s = texto.replace(/-/g, "+").replace(/_/g, "/");
+  const resto = s.length % 4;
+  if (resto) s += "=".repeat(4 - resto);
+  const bin = atob(s);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function hmacHex(mensagem: string): Promise<string> {
   const chave = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(segredo),
+    new TextEncoder().encode(segredo()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"]
   );
-  const assinatura = await crypto.subtle.sign(
-    "HMAC",
-    chave,
-    new TextEncoder().encode(`festa-socadinha:${senha}`)
-  );
+  const assinatura = await crypto.subtle.sign("HMAC", chave, new TextEncoder().encode(mensagem));
   return toHex(assinatura);
 }
 
-/** Comparação em tempo constante, para não vazar informação pelo tempo de resposta. */
-export function comparaSeguro(a: string, b: string) {
+/** Comparação em tempo constante, para não vazar informação pelo tempo. */
+export function comparaSeguro(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diferenca = 0;
-  for (let i = 0; i < a.length; i++) {
-    diferenca |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
+  for (let i = 0; i < a.length; i++) diferenca |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diferenca === 0;
 }
 
-/**
- * Lê a configuração de acesso do ambiente.
- *
- * Sem `SENHA_ACESSO` definida, o site roda **destrancado** — é o modo de uso
- * local no notebook, onde login só atrapalharia na portaria. Em produção a
- * variável é obrigatória (ver DEPLOY.md).
- */
-export function configAcesso() {
-  const senha = process.env.SENHA_ACESSO?.trim();
-  const segredo = process.env.SESSION_SECRET?.trim();
+/** Gera o token de sessão assinado para um admin. */
+export async function assinarSessao(payload: SessaoPayload): Promise<string> {
+  const corpo = toB64url(new TextEncoder().encode(JSON.stringify(payload)));
+  const assinatura = await hmacHex(corpo);
+  return `${corpo}.${assinatura}`;
+}
 
-  if (!senha) return { protegido: false as const };
-  return {
-    protegido: true as const,
-    senha,
-    // Se o segredo não for definido, deriva um a partir da própria senha.
-    // Funciona, mas o ideal é definir SESSION_SECRET em produção.
-    segredo: segredo && segredo.length > 0 ? segredo : `derivado:${senha}`,
-  };
+/** Valida o token do cookie e devolve o payload, ou null se for inválido/expirado. */
+export async function lerSessao(token?: string | null): Promise<SessaoPayload | null> {
+  if (!token) return null;
+  const corte = token.lastIndexOf(".");
+  if (corte <= 0) return null;
+  const corpo = token.slice(0, corte);
+  const assinatura = token.slice(corte + 1);
+
+  const esperada = await hmacHex(corpo);
+  if (!comparaSeguro(assinatura, esperada)) return null;
+
+  try {
+    const json = new TextDecoder().decode(fromB64url(corpo));
+    const p = JSON.parse(json) as SessaoPayload;
+    if (typeof p?.sub !== "number" || typeof p?.email !== "string" || typeof p?.iat !== "number") {
+      return null;
+    }
+    if (Date.now() / 1000 - p.iat > DURACAO_SESSAO_SEGUNDOS) return null;
+    return p;
+  } catch {
+    return null;
+  }
 }

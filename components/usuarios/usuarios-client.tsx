@@ -321,9 +321,12 @@ export function UsuariosClient({ jogadores }: { jogadores: Jogador[] }) {
     <div className="space-y-5">
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black texto-neon">Cadastrar jogadores</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Adicione novos jogadores, edite as cartinhas e as fotos.
+          <p className="font-display uppercase tracking-[0.2em] text-[var(--neon-green)] text-xs font-bold">
+            Gestão · Elenco
+          </p>
+          <h1 className="titulo-fc text-4xl sm:text-5xl mt-1">Cadastrar</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Adicione novos jogadores, edite as cartas e as fotos.
           </p>
         </div>
         <Dialog open={novo} onOpenChange={setNovo}>

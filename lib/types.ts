@@ -50,6 +50,9 @@ export const PONTOS = {
   melhorEmCampo: 1,
 } as const;
 
+/** Resultado compacto para a "forma" (sequência dos últimos jogos). */
+export type FormaResultado = "V" | "E" | "D";
+
 /** Linha da tabela geral ja com tudo computado (base + partidas do site). */
 export type LinhaTabela = {
   playerId: number;
@@ -69,7 +72,14 @@ export type LinhaTabela = {
   aproveitamentoPresenca: number; // 0-100
   aproveitamentoVitoria: number; // 0-100
   posicaoTabela: number;
-  variacao: number; // reservado para futuro (0 por enquanto)
+  variacao: number; // posições que subiu/caiu desde a última partida
+
+  // ---- Estatísticas extras (só das partidas lançadas no site) ----
+  mediaPontos: number; // pontos por presença
+  forma: FormaResultado[]; // até 5 últimos resultados, do mais recente ao mais antigo
+  golsPro: number; // gols do time do jogador nas partidas em que jogou
+  golsContra: number; // gols sofridos
+  saldo: number; // golsPro - golsContra
 };
 
 export type ResultadoUltimaPartida = "VITORIA" | "DERROTA" | "NEUTRO";
